@@ -1,6 +1,5 @@
 extern "C" {
   #include "types.h"
-  #include "w5100.h"
   #include "socket.h"
   #include "string.h"
 }
