@@ -1,10 +1,6 @@
 #ifndef Server_h
 #define Server_h
 
-extern "C" {
-  #include "utility/types.h"
-}
-
 #include "Print.h"
 
 class Client;

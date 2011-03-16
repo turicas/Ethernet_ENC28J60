@@ -4,6 +4,9 @@
 #include <inttypes.h>
 #include "Client.h"
 #include "Server.h"
+extern "C" {
+    #include "utility/socket.h"
+}
 
 class EthernetClass {
 private:
