@@ -29,6 +29,7 @@ typedef struct socketData {
     uint8_t state;
     uint8_t *buffer;
     uint16_t bytesToRead;
+    uint16_t firstByte;
 } SocketData;
 SocketData _SOCKETS[MAX_SOCK_NUM];
 
@@ -48,6 +49,7 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
     _SOCKETS[s].flag = flag;
     _SOCKETS[s].state = SOCK_INIT;
     _SOCKETS[s].bytesToRead = 0;
+    _SOCKETS[s].firstByte = 0;
 }
 
 void flushSockets() {
@@ -152,23 +154,33 @@ uint16_t send(SOCKET s, const uint8_t *buffer, uint16_t length) {
 }
 
 uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length) {
-    int i, bytesRead;
+    int i, j;
     if (!_SOCKETS[s].bytesToRead) {
         return;
     }
-    for (i = 0; i < _SOCKETS[s].bytesToRead && i < length; i++) {
-        buffer[i] = _SOCKETS[s].buffer[i];
-    }
-    bytesRead = i;
-    if (_SOCKETS[s].bytesToRead > bytesRead) {
-        for (i = bytesRead; i < _SOCKETS[s].bytesToRead; i++) {
-            _SOCKETS[s].buffer[i - bytesRead] = _SOCKETS[s].buffer[i];
+    else if (length == 1) {
+        buffer[0] = _SOCKETS[s].buffer[_SOCKETS[s].firstByte];
+        _SOCKETS[s].firstByte++;
+        if (_SOCKETS[s].firstByte == _SOCKETS[s].bytesToRead) {
+            _SOCKETS[s].bytesToRead = 0;
+            _SOCKETS[s].firstByte = 0;
+            free(_SOCKETS[s].buffer);
         }
     }
-    else {
-        free(_SOCKETS[s].buffer);
+    /*
+    for (i = _SOCKETS[s].firstByte, j = 0; i < _SOCKETS[s].bytesToRead && i < length; i++, j++) {
+        buffer[j] = _SOCKETS[s].buffer[i];
     }
-    _SOCKETS[s].bytesToRead -= i;
+    if (i + 1 == _SOCKETS[s].bytesToRead) {
+        free(_SOCKETS[s].buffer);
+        _SOCKETS[s].firstByte = 0;
+        _SOCKETS[s].bytesToRead = 0;
+    }
+    else {
+        _SOCKETS[s].bytesToRead -= i;
+        _SOCKETS[s].firstByte = i;
+    }
+    */
 }
 
 uint8_t disconnect(SOCKET s) {
