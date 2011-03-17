@@ -34,13 +34,16 @@ void loop()
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        Serial.print("Read: ");
-        Serial.println(c);
+        Serial.print("'");
+        Serial.print(c);
+        Serial.print("'");
+        Serial.println(current_line_is_blank);
         // if we've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
         // so we can send a reply
         if (c == '\n' && current_line_is_blank) {
           // send a standard http response header
+          Serial.println("Received headers!");
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println();

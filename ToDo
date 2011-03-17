@@ -1,3 +1,4 @@
+- send is not working properly
 - recv is not working for length > 1
 - implement send
 - implement connect

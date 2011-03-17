@@ -3,10 +3,12 @@
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
 #define BUFFER_SIZE 300
+#define SEND_LENGTH 17
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
 static uint8_t buffer[BUFFER_SIZE + 1];
+uint16_t packetLength, sendPacketLength = 0;
 #ifdef ETHERSHIELD_DEBUG
 #define ETHERSHIELD_DEBUG_SIZE 70
 char SOCKET_DEBUG[ETHERSHIELD_DEBUG_SIZE]; //TODO: remove
@@ -53,20 +55,20 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
 }
 
 void flushSockets() {
-    uint16_t packetLen, data;
+    uint16_t data;
 
-    packetLen = enc28j60PacketReceive(BUFFER_SIZE, buffer);
-    if (!packetLen) {
+    packetLength = enc28j60PacketReceive(BUFFER_SIZE, buffer);
+    if (!packetLength) {
         //DEBUG: no data available for reading!
         return;
     }
-    else if (eth_type_is_arp_and_my_ip(buffer, packetLen)) {
+    else if (eth_type_is_arp_and_my_ip(buffer, packetLength)) {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received ARP request. Answering.");
 #endif
         make_arp_answer_from_request(buffer);
     }
-    else if (!eth_type_is_ip_and_my_ip(buffer, packetLen)) {
+    else if (!eth_type_is_ip_and_my_ip(buffer, packetLength)) {
         //DEBUG: this packet is not for me! ignoring.
         return;
     }
@@ -75,7 +77,7 @@ void flushSockets() {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "ECHO REQUEST from %d.%d.%d.%d. Sending reply.", buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1], buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3]);
 #endif
-        make_echo_reply_from_request(buffer, packetLen);
+        make_echo_reply_from_request(buffer, packetLength);
     }
     else if (buffer[IP_PROTO_P] == IP_PROTO_TCP_V) {
         //DEBUG: it's TCP and for me! Do I want it?
@@ -122,14 +124,14 @@ void flushSockets() {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received ACK. Packet have data.", socketSelected);
 #endif
-                int i, dataSize = packetLen - (&buffer[data] - buffer);
+                int i, dataSize = packetLength - (&buffer[data] - buffer);
                 _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
                 _SOCKETS[socketSelected].buffer = malloc((BUFFER_SIZE - 40) * sizeof(uint8_t)); //TODO: replace 40 with the overhead
                 for (i = 0; i < dataSize; i++) {
                     _SOCKETS[socketSelected].buffer[i] = buffer[data + i];
                 }
                 _SOCKETS[socketSelected].bytesToRead = i;
-                make_tcp_ack_from_any(buffer);
+                //make_tcp_ack_from_any(buffer);
                 return;
             }
         }
@@ -150,8 +152,13 @@ uint8_t connect(SOCKET s, uint8_t *address, uint16_t port) {
     //send ACK etc. and wait until SOCK_ESTABLISHED
 }
 
-uint16_t send(SOCKET s, const uint8_t *buffer, uint16_t length) {
-}
+uint16_t send(SOCKET s, const uint8_t *bufferToSend, uint16_t length) {
+    sendPacketLength = fill_tcp_data(buffer, sendPacketLength, bufferToSend);
+    if (sendPacketLength >= SEND_LENGTH) {
+        make_tcp_ack_from_any(buffer);
+        make_tcp_ack_with_data(buffer, sendPacketLength);
+    }
+} //TODO: do it per socket
 
 uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length) {
     int i, j;
