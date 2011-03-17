@@ -16,7 +16,7 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
     _SOCKETS[s].protocol = protocol;
     _SOCKETS[s].sourcePort = sourcePort;
     _SOCKETS[s].flag = flag;
-    _SOCKETS[s].state = SOCK_CLOSED; //TODO: really need this?
+    _SOCKETS[s].state = SOCK_INIT;
 }
 
 uint8_t listen(SOCKET s) {
@@ -37,10 +37,13 @@ uint16_t recv(SOCKET s, const uint8_t *buffer, uint16_t length) {
 
 uint8_t disconnect(SOCKET s) {
     //do not call the function that does verifications
+
+    //send FYN packet
 }
 
 uint8_t close(SOCKET s) {
     //do not call the function that does verifications
+    _SOCKETS[s].state = SOCK_CLOSED;
 }
 
 uint8_t getSn_SR(SOCKET s) {
@@ -70,7 +73,7 @@ void sysinit(uint8_t txSize, uint8_t rxSize) {
     //TODO: change on standard Ethernet library to do not use this
     int i;
     for (i = 0; i < MAX_SOCK_NUM; i++) {
-        _SOCKETS[i].state = SOCK_CLOSED;
+        _SOCKETS[i].state = SOCK_INIT;
     }
 }
 
