@@ -1,5 +1,7 @@
 #include "socket.h"
+#include "net.h"
 #include "ip_arp_udp_tcp.h"
+#define BUFFER_SIZE 500
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
@@ -22,6 +24,27 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
 }
 
 void flushSockets() {
+    uint16_t packetLen, data;
+    uint8_t buffer[BUFFER_SIZE + 1];
+
+    packetLen = enc28j60PacketReceive(BUFFER_SIZE, buffer);
+    if (packetLen == 0) {
+        //DEBUG: no data available for reading!
+        return;
+    }
+    else if (eth_type_is_arp_and_my_ip(buffer, packetLen)) {
+        //DEBUG: received ARP, answering...
+        make_arp_answer_from_request(buffer);
+    }
+    else if (!eth_type_is_ip_and_my_ip(buffer, packetLen)) {
+        //DEBUG: this packet is not for me! ignoring.
+        return;
+    }
+    else if (buffer[IP_PROTO_P] == IP_PROTO_ICMP_V &&
+             buffer[ICMP_TYPE_P] == ICMP_TYPE_ECHOREQUEST_V) {
+        //DEBUG: received echo request, sending reply...
+        make_echo_reply_from_request(buffer, packetLen);
+    }
 }
 
 uint8_t listen(SOCKET s) {
