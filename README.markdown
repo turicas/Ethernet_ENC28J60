@@ -11,6 +11,7 @@ The goal of the project will be achieved as an Arduino user can use the same cod
 <div style="height: 350px; line-height: 350px; text-align: center">
     <img src="http://www.CursoDeArduino.com.br/media/ArduinoEthernetShield.jpg" style="vertical-alignt: middle; max-height: 100%" />
 </div>
+<br />
 <div style="text-align: center">
     Arduino with etherShield (based on Microchip ENC28J60 Ethernet controller)
 </div>
