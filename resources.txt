@@ -1,0 +1,12 @@
+etherShield-1.1: http://blog.thiseldo.co.uk/?p=329 and http://blog.thiseldo.co.uk/wp-files/etherShield-1.1.zip
+http://www.nuelectronics.com/estore/index.php?main_page=project_eth
+http://svn.mlalonde.net/Ethduino/
+http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1189447444/15
+http://shop.tuxgraphics.org/electronic/index-eth.html
+http://shop.tuxgraphics.org/electronic/index-chips.html
+http://shop.tuxgraphics.org/snippets/enc28j60.pdf
+http://tuxgraphics.org/electronics/200905/embedded-tcp-ip-stack.shtml
+http://tuxgraphics.org/common/src2/article09051/
+http://ww1.microchip.com/downloads/en/DeviceDoc/39662b.pdf
+http://www.ljcv.net/eip10/
+http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1290366426
