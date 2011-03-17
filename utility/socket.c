@@ -20,6 +20,16 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
 }
 
 uint8_t listen(SOCKET s) {
+    uint8_t port = _SOCKETS[s].port, i;
+    for (i = 0; i < MAX_SOCK_NUM; i++) {
+        if (i != s && _SOCKETS[i].sourcePort == port &&
+            _SOCKETS[i].state != SOCK_INIT &&
+            _SOCKETS[i].state != SOCK_CLOSED) { //TODO: add more states here
+            return 0;
+        }
+    }
+    _SOCKETS[s].state = SOCK_LISTEN;
+    return 1;
 }
 
 uint8_t connect(SOCKET s, uint8_t *address, uint16_t port) {
@@ -39,6 +49,7 @@ uint8_t disconnect(SOCKET s) {
     //do not call the function that does verifications
 
     //send FYN packet
+    //wait to receive ACK?
 }
 
 uint8_t close(SOCKET s) {
@@ -61,8 +72,6 @@ uint16_t getSn_RX_RSR(SOCKET s) {
     //should call the function that does all the verifications on packets comming
 }
 
-/* *** Functions below are OK *** */
-
 void iinchip_init() {
     //TODO: change on standard Ethernet library to do not use this
     
@@ -71,7 +80,7 @@ void iinchip_init() {
 
 void sysinit(uint8_t txSize, uint8_t rxSize) {
     //TODO: change on standard Ethernet library to do not use this
-    int i;
+    uint8_t i;
     for (i = 0; i < MAX_SOCK_NUM; i++) {
         _SOCKETS[i].state = SOCK_INIT;
     }
@@ -79,7 +88,7 @@ void sysinit(uint8_t txSize, uint8_t rxSize) {
 
 void setSHAR(uint8_t *macAddress) {
     //TODO: change on standard Ethernet library to do not use this
-    int i;
+    uint8_t i;
     for (i = 0; i < 6; i++) {
         myMacAddress[i] = macAddress[i];
     }
@@ -87,7 +96,7 @@ void setSHAR(uint8_t *macAddress) {
 
 void setSIPR(uint8_t *ipAddress) {
     //TODO: change on standard Ethernet library to do not use this
-    int i;
+    uint8_t i;
     for (i = 0; i < 4; i++) {
         myIpAddress[i] = ipAddress[i];
     }
@@ -95,7 +104,7 @@ void setSIPR(uint8_t *ipAddress) {
 
 void setGAR(uint8_t *gatewayIpAddress) {
     //TODO: change on standard Ethernet library to do not use this
-    int i;
+    uint8_t i;
     for (i = 0; i < 4; i++) {
         myGatewayIpAddress[i] = gatewayIpAddress[i];
     }
@@ -103,10 +112,10 @@ void setGAR(uint8_t *gatewayIpAddress) {
 
 void setSUBR(uint8_t *subnetAddress) {
     //TODO: change on standard Ethernet library to do not use this
-    int i;
+    uint8_t i;
     for (i = 0; i < 4; i++) {
         mySubnetAddress[i] = subnetAddress[i];
     }
 
-    init_ip_arp_udp_tcp(myMacAddress, myIpAddress, 99);
+    init_ip_arp_udp_tcp(myMacAddress, myIpAddress, 0); //TODO: change this port
 }
