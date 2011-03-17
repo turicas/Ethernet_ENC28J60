@@ -7,17 +7,31 @@
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
 static uint8_t buffer[BUFFER_SIZE + 1];
+#ifdef ETHERSHIELD_DEBUG
+#define ETHERSHIELD_DEBUG_SIZE 70
+char SOCKET_DEBUG[ETHERSHIELD_DEBUG_SIZE]; //TODO: remove
+
+char *socketDebug() {
+    return SOCKET_DEBUG;
+}
+void socketClearDebug() {
+    int i;
+    for (i = 0; i < ETHERSHIELD_DEBUG_SIZE; i++) {
+        SOCKET_DEBUG[i] = 0;
+    }
+}
+#endif
 
 typedef struct socketData {
     uint8_t protocol;
     uint16_t sourcePort;
     uint8_t flag;
     uint8_t state;
-    int bytesToRead;
+    uint16_t bytesToRead;
 } SocketData;
 SocketData _SOCKETS[MAX_SOCK_NUM];
 
-#ifdef DEBUG_ETHERSHIELD
+#ifdef ETHERSHIELD_DEBUG
 void turnLEDsOn() {
     enc28j60PhyWrite(PHLCON, 0x880); //turn on
 }
@@ -44,7 +58,9 @@ void flushSockets() {
         return;
     }
     else if (eth_type_is_arp_and_my_ip(buffer, packetLen)) {
-        //DEBUG: received ARP, answering...
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "Received ARP request. Answering.");
+#endif
         make_arp_answer_from_request(buffer);
     }
     else if (!eth_type_is_ip_and_my_ip(buffer, packetLen)) {
@@ -53,20 +69,69 @@ void flushSockets() {
     }
     else if (buffer[IP_PROTO_P] == IP_PROTO_ICMP_V &&
              buffer[ICMP_TYPE_P] == ICMP_TYPE_ECHOREQUEST_V) {
-        //DEBUG: received echo request, sending reply...
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "ECHO REQUEST from %d.%d.%d.%d. Sending reply.", buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1], buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3]);
+#endif
         make_echo_reply_from_request(buffer, packetLen);
+    }
+    else if (buffer[IP_PROTO_P] == IP_PROTO_TCP_V) {
+        //DEBUG: it's TCP and for me! Do I want it?
+        uint16_t destinationPort = (buffer[TCP_DST_PORT_H_P] << 8) | buffer[TCP_DST_PORT_L_P];
+        uint8_t i, socketSelected = 255;
+        for (i = 0; i < MAX_SOCK_NUM; i++) {
+            if (_SOCKETS[i].sourcePort == destinationPort &&
+                _SOCKETS[i].state == SOCK_LISTEN) {
+                socketSelected = i;
+                break;
+            }
+        }
+        if (socketSelected == 255) {
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "Packet from: %d.%d.%d.%d:%d ignored.",
+                    buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
+                    buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3],
+                    destinationPort);
+#endif
+            return;
+        }
+        //DEBUG: ok, the TCP packet is for me and I want it.
+        else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "Received TCP SYN. Sending SYN+ACK.", socketSelected);
+#endif
+            //TODO: change state to INIT?
+            make_tcp_synack_from_syn(buffer);
+        }
+        else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) {
+            init_len_info(buffer);
+            data = get_tcp_data_pointer();
+            if (!data) {
+                if (buffer[TCP_FLAGS_P] & TCP_FLAGS_FIN_V) {
+#ifdef ETHERSHIELD_DEBUG
+                    sprintf(SOCKET_DEBUG, "Received ACK+FIN. Closing socket.", socketSelected);
+#endif
+                    make_tcp_ack_from_any(buffer);
+                    _SOCKETS[socketSelected].state = SOCK_CLOSED;
+                }
+                return;
+            }
+            else {
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "Received ACK. Packet have data.", socketSelected);
+#endif
+                make_tcp_ack_from_any(buffer);
+                return;
+            }
+        }
+        else {
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "don't know what to do");
+#endif
+        }
     }
 }
 
 uint8_t listen(SOCKET s) {
-    uint8_t port = _SOCKETS[s].sourcePort, i;
-    for (i = 0; i < MAX_SOCK_NUM; i++) {
-        if (i != s && _SOCKETS[i].sourcePort == port &&
-            _SOCKETS[i].state != SOCK_INIT &&
-            _SOCKETS[i].state != SOCK_CLOSED) { //TODO: add more states here
-            return 0;
-        }
-    }
     _SOCKETS[s].state = SOCK_LISTEN;
     return 1;
 }
@@ -122,8 +187,11 @@ void sysinit(uint8_t txSize, uint8_t rxSize) {
     //TODO: change on standard Ethernet library to do not use this
     uint8_t i;
     for (i = 0; i < MAX_SOCK_NUM; i++) {
-        _SOCKETS[i].state = SOCK_INIT;
+        _SOCKETS[i].state = SOCK_CLOSED;
     }
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "init"); //TODO: remove
+#endif
 }
 
 void setSHAR(uint8_t *macAddress) {
@@ -160,5 +228,5 @@ void setSUBR(uint8_t *subnetAddress) {
         mySubnetAddress[i] = subnetAddress[i];
     }
 
-    init_ip_arp_udp_tcp(myMacAddress, myIpAddress, 0); //TODO: change this port
+    init_ip_arp_udp_tcp(myMacAddress, myIpAddress, 1); //TODO: change this port
 }

@@ -262,13 +262,12 @@ void make_tcphead(uint8_t *buf,uint16_t rel_ack_num,uint8_t mss,uint8_t cp_seq)
 {
         uint8_t i=0;
         uint8_t tseq;
-        while(i<2){
-                buf[TCP_DST_PORT_H_P+i]=buf[TCP_SRC_PORT_H_P+i];
-                buf[TCP_SRC_PORT_H_P+i]=0; // clear source port
-                i++;
-        }
-        // set source port  (http):
-        buf[TCP_SRC_PORT_L_P]=wwwport;
+        uint8_t destinationPortH = buf[TCP_DST_PORT_H_P];
+        uint8_t destinationPortL = buf[TCP_DST_PORT_L_P];
+        buf[TCP_DST_PORT_H_P] = buf[TCP_SRC_PORT_H_P];
+        buf[TCP_DST_PORT_L_P] = buf[TCP_SRC_PORT_L_P];
+        buf[TCP_SRC_PORT_H_P] = destinationPortH; //set source port
+        buf[TCP_SRC_PORT_L_P] = destinationPortL;
         i=4;
         // sequence numbers:
         // add the rel ack num to SEQACK

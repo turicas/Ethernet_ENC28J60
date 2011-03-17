@@ -3,6 +3,8 @@
 
 #include <inttypes.h>
 
+#define ETHERSHIELD_DEBUG
+
 #define SOCK_CLOSED         0x00
 #define SOCK_INIT           0x13
 #define SOCK_LISTEN         0x14
@@ -17,6 +19,11 @@
 //TODO: it should be at socket.h in the standard Ethernet library, not in types.h
 
 typedef uint8_t SOCKET;
+
+#ifdef ETHERSHIELD_DEBUG
+char *socketDebug();
+void socketClearDebug();
+#endif
 
 uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag);
 

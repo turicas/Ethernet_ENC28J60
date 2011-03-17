@@ -16,6 +16,10 @@ public:
   void begin(uint8_t *, uint8_t *);
   void begin(uint8_t *, uint8_t *, uint8_t *);
   void begin(uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+#ifdef ETHERSHIELD_DEBUG
+  char *returnDebug();
+  void clearDebug();
+#endif
   friend class Client;
   friend class Server;
 };
