@@ -7,6 +7,15 @@ There is a library called [etherShield](http://www.nuelectronics.com/download/pr
 
 The goal of the project will be achieved as an Arduino user can use the same code for both Ethernet controllers (W5100 and ENC28J60). With this project I can also identify architectural problems in the standard Ethernet library implementation and make it better.
 
+
+<div style="height: 350px; line-height: 350px; text-align: center">
+    <img src="http://www.CursoDeArduino.com.br/media/ArduinoEthernetShield.jpg" style="vertical-alignt: middle; max-height: 100%" />
+</div>
+<div style="text-align: center">
+    Arduino with etherShield (based on Microchip ENC28J60 Ethernet controller)
+</div>
+
+
 Limitations
 ===========
 
