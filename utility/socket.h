@@ -33,7 +33,7 @@ uint8_t connect(SOCKET s, uint8_t *address, uint16_t port);
 
 uint16_t send(SOCKET s, const uint8_t *buffer, uint16_t length);
 
-uint16_t recv(SOCKET s, const uint8_t *buffer, uint16_t length);
+uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length);
 
 uint8_t disconnect(SOCKET s);
 

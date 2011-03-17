@@ -2,7 +2,7 @@
 #include "net.h"
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
-#define BUFFER_SIZE 500
+#define BUFFER_SIZE 300
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
@@ -27,6 +27,7 @@ typedef struct socketData {
     uint16_t sourcePort;
     uint8_t flag;
     uint8_t state;
+    uint8_t *buffer;
     uint16_t bytesToRead;
 } SocketData;
 SocketData _SOCKETS[MAX_SOCK_NUM];
@@ -99,7 +100,7 @@ void flushSockets() {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received TCP SYN. Sending SYN+ACK.", socketSelected);
 #endif
-            //TODO: change state to INIT?
+            _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
             make_tcp_synack_from_syn(buffer);
         }
         else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) {
@@ -119,6 +120,13 @@ void flushSockets() {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received ACK. Packet have data.", socketSelected);
 #endif
+                int i, dataSize = packetLen - (&buffer[data] - buffer);
+                _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
+                _SOCKETS[socketSelected].buffer = malloc((BUFFER_SIZE - 40) * sizeof(uint8_t)); //TODO: replace 40 with the overhead
+                for (i = 0; i < dataSize; i++) {
+                    _SOCKETS[socketSelected].buffer[i] = buffer[data + i];
+                }
+                _SOCKETS[socketSelected].bytesToRead = i;
                 make_tcp_ack_from_any(buffer);
                 return;
             }
@@ -143,10 +151,24 @@ uint8_t connect(SOCKET s, uint8_t *address, uint16_t port) {
 uint16_t send(SOCKET s, const uint8_t *buffer, uint16_t length) {
 }
 
-uint16_t recv(SOCKET s, const uint8_t *buffer, uint16_t length) {
-    //if there are bytes to read for socket s, write it on buffer
-
-    //probably do not call the function that does verifications
+uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length) {
+    int i, bytesRead;
+    if (!_SOCKETS[s].bytesToRead) {
+        return;
+    }
+    for (i = 0; i < _SOCKETS[s].bytesToRead && i < length; i++) {
+        buffer[i] = _SOCKETS[s].buffer[i];
+    }
+    bytesRead = i;
+    if (_SOCKETS[s].bytesToRead > bytesRead) {
+        for (i = bytesRead; i < _SOCKETS[s].bytesToRead; i++) {
+            _SOCKETS[s].buffer[i - bytesRead] = _SOCKETS[s].buffer[i];
+        }
+    }
+    else {
+        free(_SOCKETS[s].buffer);
+    }
+    _SOCKETS[s].bytesToRead -= i;
 }
 
 uint8_t disconnect(SOCKET s) {
