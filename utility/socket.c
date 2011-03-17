@@ -1,10 +1,12 @@
 #include "socket.h"
 #include "net.h"
+#include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
 #define BUFFER_SIZE 500
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
+static uint8_t buffer[BUFFER_SIZE + 1];
 
 typedef struct socketData {
     uint8_t protocol;
@@ -14,6 +16,16 @@ typedef struct socketData {
     int bytesToRead;
 } SocketData;
 SocketData _SOCKETS[MAX_SOCK_NUM];
+
+#ifdef DEBUG_ETHERSHIELD
+void turnLEDsOn() {
+    enc28j60PhyWrite(PHLCON, 0x880); //turn on
+}
+
+void turnLEDsOff() {
+    enc28j60PhyWrite(PHLCON, 0x990); //turn off
+}
+#endif
 
 uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
     _SOCKETS[s].protocol = protocol;
@@ -25,10 +37,9 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
 
 void flushSockets() {
     uint16_t packetLen, data;
-    uint8_t buffer[BUFFER_SIZE + 1];
 
     packetLen = enc28j60PacketReceive(BUFFER_SIZE, buffer);
-    if (packetLen == 0) {
+    if (!packetLen) {
         //DEBUG: no data available for reading!
         return;
     }
@@ -121,6 +132,9 @@ void setSHAR(uint8_t *macAddress) {
     for (i = 0; i < 6; i++) {
         myMacAddress[i] = macAddress[i];
     }
+    enc28j60Init(myMacAddress);
+    enc28j60clkout(2);
+    enc28j60PhyWrite(PHLCON, 0x476); //LEDA = link status, LEDB = RX/TX
 }
 
 void setSIPR(uint8_t *ipAddress) {
