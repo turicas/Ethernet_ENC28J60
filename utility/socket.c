@@ -9,6 +9,7 @@ typedef struct socketData {
     uint16_t sourcePort;
     uint8_t flag;
     uint8_t state;
+    int bytesToRead;
 } SocketData;
 SocketData _SOCKETS[MAX_SOCK_NUM];
 
@@ -17,10 +18,14 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
     _SOCKETS[s].sourcePort = sourcePort;
     _SOCKETS[s].flag = flag;
     _SOCKETS[s].state = SOCK_INIT;
+    _SOCKETS[s].bytesToRead = 0;
+}
+
+void flushSockets() {
 }
 
 uint8_t listen(SOCKET s) {
-    uint8_t port = _SOCKETS[s].port, i;
+    uint8_t port = _SOCKETS[s].sourcePort, i;
     for (i = 0; i < MAX_SOCK_NUM; i++) {
         if (i != s && _SOCKETS[i].sourcePort == port &&
             _SOCKETS[i].state != SOCK_INIT &&
@@ -61,7 +66,7 @@ uint8_t getSn_SR(SOCKET s) {
     //get socket status
     //TODO: change on standard Ethernet library to do not use this
 
-    //should call the function that does all the verifications on packets comming
+    flushSockets();
     return _SOCKETS[s].state;
 }
 
@@ -69,7 +74,8 @@ uint16_t getSn_RX_RSR(SOCKET s) {
     //return the size of the receive buffer for that socket
     //TODO: change on standard Ethernet library to do not use this
 
-    //should call the function that does all the verifications on packets comming
+    flushSockets();
+    return _SOCKETS[s].bytesToRead;
 }
 
 void iinchip_init() {

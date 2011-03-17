@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #define SOCK_CLOSED         0x00
+#define SOCK_INIT           0x13
 #define SOCK_LISTEN         0x14
 #define SOCK_ESTABLISHED    0x17
 #define SOCK_CLOSE_WAIT     0x1C
