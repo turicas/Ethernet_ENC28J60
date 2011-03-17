@@ -14,6 +14,38 @@ Limitations
 - Now only support for TCP server (connect, sendto and recvfrom don't work yet);
 
 
+Architecture
+============
+
+WIZnet W5100 Library
+--------------------
+
+In the standard Ethernet library, the Ethernet, Server and Client classes use the socket API to send and received data over the network. The socket library uses the "driver", (w5100 library) to communicate with the controller. Something like this:
+
+{Ethernet.cpp, Server.cpp, Client.cpp} <-> socket.c <-> w5100.c
+
+Microchip ENC28J60 Library
+--------------------------
+
+In my implementation I have another layer: ip_arp_udp_tcp. This is a kind-of socket layer (it is really not a socket layer since it doesn't provide a kind of socket API -- merely we have here a lot of helper functions to read, identify, create and send packets using the "driver" enc28j60). For now, we have this:
+
+{Ethernet.cpp, Server.cpp, Client.cpp} <-> socket.c <-> ip_arp_udp_tcp.c <-> enc28j60.c
+
+In a near future I want to replace all ip_arp_udp_tcp layer in the socket layer, so the architecture will be more like the standard Ethernet library:
+
+{Ethernet.cpp, Server.cpp, Client.cpp} <-> socket.c <-> enc28j60.c
+
+When this goal is reached we can create a single socket.c that communicate with one or another controller (W5100 or ENC28J60).
+
+Goals
+=====
+
+- connect()
+- sendto() and recvfrom()
+- Support for multiple sockets
+- Put all the features of ip_arp_udp_tcp.c in socket.c (and then removes ip_arp_udp_tcp.*)
+
+
 Warning
 =======
 This is a work-in-progress project and need more tests to be used in production environments.
