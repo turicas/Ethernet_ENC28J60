@@ -1,4 +1,5 @@
-- send is not working properly
+- send is not working properly: disconnect that is really sending packets
 - recv is not working for length > 1
+- if we have a packet size greater than BUFFER_SIZE ... ?
 - implement send
 - implement connect

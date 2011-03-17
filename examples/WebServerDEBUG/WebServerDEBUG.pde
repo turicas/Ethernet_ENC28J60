@@ -10,52 +10,60 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 byte ip[] = { 192, 168, 1, 177 };
 
 Server server(80);
-char dbg[50];
+#ifdef ETHERSHIELD_DEBUG
+char dbg[70];
+#endif
 
 void setup()
 {
   Ethernet.begin(mac, ip);
   server.begin();
+#ifdef ETHERSHIELD_DEBUG
   Serial.begin(9600);
+#endif
 }
 
 void loop()
 {
   Client client = server.available();
+#ifdef ETHERSHIELD_DEBUG
   sprintf(dbg, "%s", Ethernet.returnDebug());
   if (dbg[0] != 0) {
     Serial.println(dbg);
     Ethernet.clearDebug();
   }
+#endif
   if (client) {
+#ifdef ETHERSHIELD_DEBUG
     Serial.println("New client!");
+#endif
     // an http request ends with a blank line
     boolean current_line_is_blank = true;
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        Serial.print("'");
+#ifdef ETHERSHIELD_DEBUG
         Serial.print(c);
-        Serial.print("'");
-        Serial.println(current_line_is_blank);
+#endif
         // if we've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
         // so we can send a reply
         if (c == '\n' && current_line_is_blank) {
           // send a standard http response header
+#ifdef ETHERSHIELD_DEBUG
           Serial.println("Received headers!");
+#endif
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println();
           
           // output the value of each analog input pin
-          for (int i = 0; i < 6; i++) {
-            client.print("analog input ");
-            client.print(i);
-            client.print(" is ");
-            client.print(analogRead(i));
-            client.println("<br />");
-          }
+          client.print("Analog input 0 = <b>");
+          client.print(analogRead(0));
+          client.println("</b><br>");
+          client.print("millis() = <b>");
+          client.println(millis());
+          client.println("</b><br>");
           break;
         }
         if (c == '\n') {
@@ -67,7 +75,9 @@ void loop()
         }
       }
     }
+#ifdef ETHERSHIELD_DEBUG
     Serial.println("Disconnected");
+#endif
     // give the web browser time to receive the data
     delay(1);
     client.stop();

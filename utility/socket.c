@@ -2,8 +2,7 @@
 #include "net.h"
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
-#define BUFFER_SIZE 300
-#define SEND_LENGTH 17
+#define BUFFER_SIZE 550
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
@@ -97,10 +96,12 @@ void flushSockets() {
                     buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3],
                     destinationPort);
 #endif
-            return;
+            //return; //TODO: return!
+            socketSelected = 0; //TODO: remove this hack
         }
+        //TODO: change next 'if' to 'else if'
         //DEBUG: ok, the TCP packet is for me and I want it.
-        else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
+        if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received TCP SYN. Sending SYN+ACK.", socketSelected);
 #endif
@@ -126,7 +127,7 @@ void flushSockets() {
 #endif
                 int i, dataSize = packetLength - (&buffer[data] - buffer);
                 _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
-                _SOCKETS[socketSelected].buffer = malloc((BUFFER_SIZE - 40) * sizeof(uint8_t)); //TODO: replace 40 with the overhead
+                _SOCKETS[socketSelected].buffer = malloc((BUFFER_SIZE) * sizeof(uint8_t)); //TODO: and about the TCP/IP/Ethernet overhead?
                 for (i = 0; i < dataSize; i++) {
                     _SOCKETS[socketSelected].buffer[i] = buffer[data + i];
                 }
@@ -153,11 +154,7 @@ uint8_t connect(SOCKET s, uint8_t *address, uint16_t port) {
 }
 
 uint16_t send(SOCKET s, const uint8_t *bufferToSend, uint16_t length) {
-    sendPacketLength = fill_tcp_data(buffer, sendPacketLength, bufferToSend);
-    if (sendPacketLength >= SEND_LENGTH) {
-        make_tcp_ack_from_any(buffer);
-        make_tcp_ack_with_data(buffer, sendPacketLength);
-    }
+    sendPacketLength = fill_tcp_data2(buffer, sendPacketLength, bufferToSend, length);
 } //TODO: do it per socket
 
 uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length) {
@@ -191,10 +188,14 @@ uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length) {
 }
 
 uint8_t disconnect(SOCKET s) {
-    //do not call the function that does verifications
-
-    //send FYN packet
-    //wait to receive ACK?
+    if (sendPacketLength) {
+        make_tcp_ack_from_any(buffer);
+        make_tcp_ack_with_data(buffer, sendPacketLength);
+        sendPacketLength = 0;
+    }
+    //TODO:send FYN packet
+    //TODO:wait to receive ACK?
+    _SOCKETS[s].state = SOCK_CLOSED; //TODO: remove this hack
 }
 
 uint8_t close(SOCKET s) {

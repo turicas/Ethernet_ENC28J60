@@ -41,7 +41,7 @@ void Server::accept()
     } 
   }
   
-  if (!listening) {
+  if (!listening) {      
     begin();
   }
 }

@@ -469,6 +469,16 @@ uint16_t fill_tcp_data(uint8_t *buf,uint16_t pos, const char *s)
         return(pos);
 }
 
+uint16_t fill_tcp_data2(uint8_t *buf, uint16_t pos, const char *s, uint8_t length) {
+        uint8_t i = 0;
+        while (i < length) {
+                buf[TCP_CHECKSUM_L_P + 3 + pos] = s[i];
+                pos++;
+                i++;
+        }
+        return(pos);
+}
+
 // Make just an ack packet with no tcp data inside
 // This will modify the eth/ip/tcp header 
 void make_tcp_ack_from_any(uint8_t *buf)
