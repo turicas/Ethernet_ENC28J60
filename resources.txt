@@ -1,3 +1,6 @@
+http://en.wikipedia.org/wiki/File:Tcp_state_diagram_fixed_new.svg
+http://en.wikipedia.org/wiki/Transmission_Control_Protocol
+
 etherShield-1.1: http://blog.thiseldo.co.uk/?p=329 and http://blog.thiseldo.co.uk/wp-files/etherShield-1.1.zip
 http://www.nuelectronics.com/estore/index.php?main_page=project_eth
 http://svn.mlalonde.net/Ethduino/

@@ -10,7 +10,7 @@ static uint8_t buffer[BUFFER_SIZE + 1];
 uint16_t packetLength, sendPacketLength = 0;
 #ifdef ETHERSHIELD_DEBUG
 #define ETHERSHIELD_DEBUG_SIZE 70
-char SOCKET_DEBUG[ETHERSHIELD_DEBUG_SIZE]; //TODO: remove
+char SOCKET_DEBUG[ETHERSHIELD_DEBUG_SIZE];
 
 char *socketDebug() {
     return SOCKET_DEBUG;

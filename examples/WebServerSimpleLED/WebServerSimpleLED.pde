@@ -33,12 +33,14 @@ void loop() {
           client.println();
           
           client.println("<html><head><title>Arduino etherShield</title></head><body>");
-          client.print("Analog input 0 = <b>");
+          client.println("<h1>Arduino Ethernet Shield Example</h1>");
+          client.println("<table>");
+          client.print("<tr><td>Analog input 0:</td> <td><b>");
           client.print(analogRead(0));
-          client.println("</b><br>");
-          client.print("millis() = <b>");
+          client.println("</b></td></tr>");
+          client.print("<tr><td>millis()</td> <td><b>");
           client.print(millis());
-          client.println("</b><br>");
+          client.println("</b></td></tr>");
           if (strncmp("GET /off", request, 8) == 0) {
             digitalWrite(LED, LOW);
             sprintf(LEDStatus, "OFF");
@@ -49,11 +51,11 @@ void loop() {
             digitalWrite(LED, HIGH);
             sprintf(link, "<a href=\"/off\">Turn off</a>");
           }
-          client.print("LED status: <b>");
+          client.print("<tr><td>LED status:</td> <td><b>");
           client.print(LEDStatus);
-          client.println("</b><br>");
+          client.println("</b></td></tr><tr><td colspan=\"2\" align=\"center\">");
           client.println(link);
-          client.println("</body></html>");
+          client.println("</td></tr></table></body></html>");
           break;
         }
         if (c == '\n') {
