@@ -149,8 +149,30 @@ uint8_t listen(SOCKET s) {
     return 1;
 }
 
-uint8_t connect(SOCKET s, uint8_t *address, uint16_t port) {
-    //send ACK etc. and wait until SOCK_ESTABLISHED
+uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
+    uint16_t packetChecksum;
+
+    make_arp_request(buffer, destinationIp);
+    //wait for MAC address
+    make_eth_ip_new(buffer, destinationMac); //should do this on flushSockets
+    // and probably add ARP information/state to the socket struct
+
+    // total length field in the IP header must be set:
+    // 20 bytes IP + 24 bytes (20tcp+4tcp options)
+    buf[IP_TOTLEN_H_P] = 0;
+    buf[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
+    make_ip(buffer);
+    buf[TCP_FLAG_P] = TCP_FLAGS_SYNACK_V;
+    make_tcphead(buffer, 1, 1, 0);
+
+    // calculate the checksum, len=8 (start from ip.src) +
+    // TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
+    packetChecksum = checksum(&buffer[IP_SRC_P], TCP_HEADER_LEN_PLAIN + 12, 2);
+    buf[TCP_CHECKSUM_H_P] = packetChecksum >> 8;
+    buf[TCP_CHECKSUM_L_P] = packetChecksum & 0xff;
+    // add 4 for option mss:
+    enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN,
+                       buffer);
 }
 
 uint16_t send(SOCKET s, const uint8_t *bufferToSend, uint16_t length) {

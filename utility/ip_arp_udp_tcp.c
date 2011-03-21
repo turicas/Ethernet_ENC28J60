@@ -163,19 +163,17 @@ void make_eth(uint8_t *buf)
 }
 
 // make a new eth header for IP packet
-void make_eth_ip_new(uint8_t *buf, uint8_t* dst_mac)
-{
-    uint8_t i=0;
-    //
+void make_eth_ip_new(uint8_t *buf, uint8_t* dst_mac) {
+    uint8_t i = 0;
     //copy the destination mac from the source and fill my mac into src
     while(i<6){
-        buf[ETH_DST_MAC +i]=dst_mac[i];
-        buf[ETH_SRC_MAC +i]=macaddr[i];
+        buf[ETH_DST_MAC + i] = dst_mac[i];
+        buf[ETH_SRC_MAC + i] = macaddr[i];
         i++;
     }
 
-    buf[ ETH_TYPE_H_P ] = ETHTYPE_IP_H_V;
-    buf[ ETH_TYPE_L_P ] = ETHTYPE_IP_L_V;
+    buf[ETH_TYPE_H_P] = ETHTYPE_IP_H_V;
+    buf[ETH_TYPE_L_P] = ETHTYPE_IP_L_V;
 }
 
 
@@ -539,56 +537,50 @@ void make_tcp_ack_with_data(uint8_t *buf,uint16_t dlen)
 
 
 /* new functions for web client interface */
-void make_arp_request(uint8_t *buf, uint8_t *server_ip)
-{
-    uint8_t i=0;
+void make_arp_request(uint8_t *buf, uint8_t *server_ip) {
+    uint8_t i;
 
-    while(i<6)
-    {
-        buf[ETH_DST_MAC +i]=0xff;
-        buf[ETH_SRC_MAC +i]=macaddr[i];
-        i++;
+    for (i = 0; i < 6; i++) {
+        buf[ETH_DST_MAC + i] = 0xff;
+        buf[ETH_SRC_MAC + i] = macaddr[i];
     }
 
-    buf[ ETH_TYPE_H_P ] = ETHTYPE_ARP_H_V;
-    buf[ ETH_TYPE_L_P ] = ETHTYPE_ARP_L_V;
+    buf[ETH_TYPE_H_P] = ETHTYPE_ARP_H_V;
+    buf[ETH_TYPE_L_P] = ETHTYPE_ARP_L_V;
 
     // generate arp packet
-    buf[ARP_OPCODE_H_P]=ARP_OPCODE_REQUEST_H_V;
-    buf[ARP_OPCODE_L_P]=ARP_OPCODE_REQUEST_L_V;
+    buf[ARP_OPCODE_H_P] = ARP_OPCODE_REQUEST_H_V;
+    buf[ARP_OPCODE_L_P] = ARP_OPCODE_REQUEST_L_V;
 
     // fill in arp request packet
     // setup hardware type to ethernet 0x0001
-    buf[ ARP_HARDWARE_TYPE_H_P ] = ARP_HARDWARE_TYPE_H_V;
-    buf[ ARP_HARDWARE_TYPE_L_P ] = ARP_HARDWARE_TYPE_L_V;
+    buf[ARP_HARDWARE_TYPE_H_P] = ARP_HARDWARE_TYPE_H_V;
+    buf[ARP_HARDWARE_TYPE_L_P] = ARP_HARDWARE_TYPE_L_V;
 
     // setup protocol type to ip 0x0800
-    buf[ ARP_PROTOCOL_H_P ] = ARP_PROTOCOL_H_V;
-    buf[ ARP_PROTOCOL_L_P ] = ARP_PROTOCOL_L_V;
+    buf[ARP_PROTOCOL_H_P] = ARP_PROTOCOL_H_V;
+    buf[ARP_PROTOCOL_L_P] = ARP_PROTOCOL_L_V;
 
     // setup hardware length to 0x06
-    buf[ ARP_HARDWARE_SIZE_P ] = ARP_HARDWARE_SIZE_V;
+    buf[ARP_HARDWARE_SIZE_P] = ARP_HARDWARE_SIZE_V;
 
     // setup protocol length to 0x04
-    buf[ ARP_PROTOCOL_SIZE_P ] = ARP_PROTOCOL_SIZE_V;
+    buf[ARP_PROTOCOL_SIZE_P] = ARP_PROTOCOL_SIZE_V;
 
     // setup arp destination and source mac address
-    for ( i=0; i<6; i++)
-    {
-        buf[ ARP_DST_MAC_P + i ] = 0x00;
-        buf[ ARP_SRC_MAC_P + i ] = macaddr[i];
+    for (i = 0; i < 6; i++) {
+        buf[ARP_DST_MAC_P + i] = 0x00;
+        buf[ARP_SRC_MAC_P + i] = macaddr[i];
     }
 
     // setup arp destination and source ip address
-    for ( i=0; i<4; i++)
-    {
-        buf[ ARP_DST_IP_P + i ] = server_ip[i];
-        buf[ ARP_SRC_IP_P + i ] = ipaddr[i];
+    for (i = 0; i < 4; i++) {
+        buf[ARP_DST_IP_P + i] = server_ip[i];
+        buf[ARP_SRC_IP_P + i] = ipaddr[i];
     }
 
     // eth+arp is 42 bytes:
-    enc28j60PacketSend(42,buf);
-
+    enc28j60PacketSend(42, buf);
 }
 
 
