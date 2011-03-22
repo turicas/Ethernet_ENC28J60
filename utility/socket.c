@@ -136,6 +136,7 @@ void flushSockets() {
             make_tcp_ack_from_any(buffer);
             _SOCKETS[0].clientState = SOCK_ESTABLISHED;
             //TODO: write code to get socket id instead of 0
+            return;
         }
         else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
 #ifdef ETHERSHIELD_DEBUG
@@ -191,7 +192,7 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
 
     //TODO: create an ARP table?
     make_arp_request(buffer, destinationIp);
-    _SOCKETS[s].state = ARP_REQUEST_SENT;
+    _SOCKETS[s].clientState = ARP_REQUEST_SENT;
 #ifdef ETHERSHIELD_DEBUG
     sprintf(SOCKET_DEBUG, "Sent ARP request.");
 #endif
@@ -224,10 +225,13 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     sprintf(SOCKET_DEBUG, "TCP SYN sent.");
 #endif
 
-    for (i = 0; _SOCKETS[s].state != SOCK_ESTABLISHED && i < MAX_ITERATIONS; i++) {
+    for (i = 0; _SOCKETS[s].clientState != SOCK_ESTABLISHED && i < MAX_ITERATIONS; i++) {
         flushSockets();
     }
-    return _SOCKETS[s].state == SOCK_ESTABLISHED;
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "Socket state = %d", _SOCKETS[s].clientState);
+#endif
+    return _SOCKETS[s].clientState == SOCK_ESTABLISHED;
     //TODO: Maybe use a default timeout to receive SYN+ACK
 }
 
