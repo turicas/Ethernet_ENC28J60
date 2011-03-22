@@ -3,7 +3,7 @@
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
 #define BUFFER_SIZE         550
-#define MAX_ITERATIONS      1000
+#define MAX_ITERATIONS      65000
 
 #define NO_STATE            0
 #define GOT_MAC             1
@@ -53,6 +53,9 @@ void turnLEDsOff() {
 #endif
 
 uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "Called socket()");
+#endif
     _SOCKETS[s].protocol = protocol;
     _SOCKETS[s].sourcePort = sourcePort;
     _SOCKETS[s].flag = flag;
@@ -171,7 +174,7 @@ void flushSockets() {
         }
         else {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "don't know what to do");
+            sprintf(SOCKET_DEBUG, "Don't know what to do! o.O");
 #endif
         }
     }
@@ -189,6 +192,9 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     //TODO: create an ARP table?
     make_arp_request(buffer, destinationIp);
     _SOCKETS[s].state = ARP_REQUEST_SENT;
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "Sent ARP request.");
+#endif
 
     for (i = 0; _SOCKETS[s].clientState != GOT_MAC && i < MAX_ITERATIONS; i++) {
         flushSockets(); //it'll fill destinationMac on socket struct
@@ -214,6 +220,9 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN,
                        buffer);
     _SOCKETS[s].clientState = TCP_SYN_SENT;
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "TCP SYN sent.");
+#endif
 
     for (i = 0; _SOCKETS[s].state != SOCK_ESTABLISHED && i < MAX_ITERATIONS; i++) {
         flushSockets();
@@ -277,6 +286,9 @@ uint8_t getSn_SR(SOCKET s) {
     //TODO: change on standard Ethernet library to do not use this
 
     flushSockets();
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "getSn_SR(%d) = %d", s, _SOCKETS[s].state);
+#endif
     return _SOCKETS[s].state;
 }
 
