@@ -3,6 +3,8 @@
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
 #define BUFFER_SIZE 550
+#define NO_STATE 0
+#define GOT_MAC 1
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
@@ -31,6 +33,8 @@ typedef struct socketData {
     uint8_t *buffer;
     uint16_t bytesToRead;
     uint16_t firstByte;
+    uint8_t clientState;
+    uint8_t destinationMac[6];
 } SocketData;
 SocketData _SOCKETS[MAX_SOCK_NUM];
 
@@ -150,21 +154,27 @@ uint8_t listen(SOCKET s) {
 }
 
 uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
-    uint16_t packetChecksum;
+    uint16_t packetChecksum, i;
+    char buffer[43];
 
+    //TODO: create an ARP table?
     make_arp_request(buffer, destinationIp);
-    //wait for MAC address
-    make_eth_ip_new(buffer, destinationMac); //should do this on flushSockets
-    // and probably add ARP information/state to the socket struct
+    for (i = 0; _SOCKETS[s].clientState != GOT_MAC && i < MAX_ITERATIONS; i++) {
+        flushSockets(); //it'll fill destinationMac on socket struct
+    }
+    if (_SOCKETS[s].clientState != GOT_MAC) {
+        return 0;
+    }
+
+    make_eth_ip_new(buffer, _SOCKETS[s].destinationMac);
 
     // total length field in the IP header must be set:
     // 20 bytes IP + 24 bytes (20tcp+4tcp options)
     buf[IP_TOTLEN_H_P] = 0;
     buf[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
     make_ip(buffer);
-    buf[TCP_FLAG_P] = TCP_FLAGS_SYNACK_V;
+    buf[TCP_FLAG_P] = TCP_FLAG_SYN_V;
     make_tcphead(buffer, 1, 1, 0);
-
     // calculate the checksum, len=8 (start from ip.src) +
     // TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
     packetChecksum = checksum(&buffer[IP_SRC_P], TCP_HEADER_LEN_PLAIN + 12, 2);
@@ -173,6 +183,12 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     // add 4 for option mss:
     enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN,
                        buffer);
+
+    for (i = 0; _SOCKETS[s].state != SOCK_ESTABLISHED && i < MAX_ITERATIONS; i++) {
+        flushSockets();
+    }
+    return _SOCKETS[s].state == SOCK_ESTABLISHED;
+    //TODO: Maybe use a default timeout to receive SYN+ACK
 }
 
 uint16_t send(SOCKET s, const uint8_t *bufferToSend, uint16_t length) {
