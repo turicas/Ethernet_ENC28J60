@@ -2,9 +2,13 @@
 #include "net.h"
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
-#define BUFFER_SIZE 550
-#define NO_STATE 0
-#define GOT_MAC 1
+#define BUFFER_SIZE         550
+#define MAX_ITERATIONS      1000
+
+#define NO_STATE            0
+#define GOT_MAC             1
+#define ARP_REQUEST_SENT    2
+#define TCP_SYN_SENT        3
 
 uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
@@ -55,6 +59,7 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
     _SOCKETS[s].state = SOCK_INIT;
     _SOCKETS[s].bytesToRead = 0;
     _SOCKETS[s].firstByte = 0;
+    _SOCKETS[s].clientState = NO_STATE;
 }
 
 void flushSockets() {
@@ -66,13 +71,28 @@ void flushSockets() {
         return;
     }
     else if (eth_type_is_arp_and_my_ip(buffer, packetLength)) {
+        if (arp_packet_is_myreply_arp(buffer)) {
+            uint8_t i;
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "Received ARP reply!");
+#endif
+            for (i = 0; i < 6; i++) {
+                _SOCKETS[0].destinationMac[i] = buffer[ETH_SRC_MAC + i];
+            }
+            _SOCKETS[0].clientState = GOT_MAC;
+            //TODO: write code to get socket id instead of 0
+        }
+        else {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received ARP request. Answering.");
 #endif
-        make_arp_answer_from_request(buffer);
+            make_arp_answer_from_request(buffer);
+        }
     }
     else if (!eth_type_is_ip_and_my_ip(buffer, packetLength)) {
-        //DEBUG: this packet is not for me! ignoring.
+#ifdef ETHERSHIELD_DEBUG
+        sprintf(SOCKET_DEBUG, "This packet is not for me! Ignoring...");
+#endif
         return;
     }
     else if (buffer[IP_PROTO_P] == IP_PROTO_ICMP_V &&
@@ -105,7 +125,16 @@ void flushSockets() {
         }
         //TODO: change next 'if' to 'else if'
         //DEBUG: ok, the TCP packet is for me and I want it.
-        if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
+        if (buffer[TCP_FLAGS_P] == (TCP_FLAG_SYN_V | TCP_FLAG_ACK_V)) {
+#ifdef ETHERSHIELD_DEBUG
+            sprintf(SOCKET_DEBUG, "Received TCP SYN+ACK. Sending ACK.", socketSelected);
+#endif
+            //TODO: verify if I'm waiting for this SYN+ACK
+            make_tcp_ack_from_any(buffer);
+            _SOCKETS[0].clientState = SOCK_ESTABLISHED;
+            //TODO: write code to get socket id instead of 0
+        }
+        else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
 #ifdef ETHERSHIELD_DEBUG
             sprintf(SOCKET_DEBUG, "Received TCP SYN. Sending SYN+ACK.", socketSelected);
 #endif
@@ -155,10 +184,12 @@ uint8_t listen(SOCKET s) {
 
 uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     uint16_t packetChecksum, i;
-    char buffer[43];
+    char buffer[59];
 
     //TODO: create an ARP table?
     make_arp_request(buffer, destinationIp);
+    _SOCKETS[s].state = ARP_REQUEST_SENT;
+
     for (i = 0; _SOCKETS[s].clientState != GOT_MAC && i < MAX_ITERATIONS; i++) {
         flushSockets(); //it'll fill destinationMac on socket struct
     }
@@ -167,22 +198,22 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     }
 
     make_eth_ip_new(buffer, _SOCKETS[s].destinationMac);
-
     // total length field in the IP header must be set:
     // 20 bytes IP + 24 bytes (20tcp+4tcp options)
-    buf[IP_TOTLEN_H_P] = 0;
-    buf[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
+    buffer[IP_TOTLEN_H_P] = 0;
+    buffer[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
     make_ip(buffer);
-    buf[TCP_FLAG_P] = TCP_FLAG_SYN_V;
+    buffer[TCP_FLAG_P] = TCP_FLAG_SYN_V;
     make_tcphead(buffer, 1, 1, 0);
     // calculate the checksum, len=8 (start from ip.src) +
     // TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
     packetChecksum = checksum(&buffer[IP_SRC_P], TCP_HEADER_LEN_PLAIN + 12, 2);
-    buf[TCP_CHECKSUM_H_P] = packetChecksum >> 8;
-    buf[TCP_CHECKSUM_L_P] = packetChecksum & 0xff;
+    buffer[TCP_CHECKSUM_H_P] = packetChecksum >> 8;
+    buffer[TCP_CHECKSUM_L_P] = packetChecksum & 0xff;
     // add 4 for option mss:
     enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN,
                        buffer);
+    _SOCKETS[s].clientState = TCP_SYN_SENT;
 
     for (i = 0; _SOCKETS[s].state != SOCK_ESTABLISHED && i < MAX_ITERATIONS; i++) {
         flushSockets();
