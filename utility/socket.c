@@ -187,7 +187,7 @@ uint8_t listen(SOCKET s) {
 }
 
 uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
-    uint16_t packetChecksum, i;
+    uint16_t packetChecksum, i, destinationPort, sourcePort;
     char buffer[59];
 
     //TODO: create an ARP table?
@@ -203,23 +203,15 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     if (_SOCKETS[s].clientState != GOT_MAC) {
         return 0;
     }
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(SOCKET_DEBUG, "MAC received! Sending TCP SYN.");
+#endif
 
-    make_eth_ip_new(buffer, _SOCKETS[s].destinationMac);
-    // total length field in the IP header must be set:
-    // 20 bytes IP + 24 bytes (20tcp+4tcp options)
-    buffer[IP_TOTLEN_H_P] = 0;
-    buffer[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
-    make_ip(buffer);
-    buffer[TCP_FLAG_P] = TCP_FLAG_SYN_V;
-    make_tcphead(buffer, 1, 1, 0);
-    // calculate the checksum, len=8 (start from ip.src) +
-    // TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
-    packetChecksum = checksum(&buffer[IP_SRC_P], TCP_HEADER_LEN_PLAIN + 12, 2);
-    buffer[TCP_CHECKSUM_H_P] = packetChecksum >> 8;
-    buffer[TCP_CHECKSUM_L_P] = packetChecksum & 0xff;
-    // add 4 for option mss:
-    enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN,
-                       buffer);
+    uint16_t sourcePort = (buffer[TCP_SRC_PORT_H_P] << 8) | buffer[TCP_SRC_PORT_L_P];
+    uint16_t destinationPort = (buffer[TCP_DST_PORT_H_P] << 8) | buffer[TCP_DST_PORT_L_P];
+    tcp_client_send_packet(buffer, destinationPort, sourcePort, TCP_FLAG_SYN_V,
+                           1, 1, 0, 0, _SOCKETS[s].destinationMac,
+                           destinationIp);
     _SOCKETS[s].clientState = TCP_SYN_SENT;
 #ifdef ETHERSHIELD_DEBUG
     sprintf(SOCKET_DEBUG, "TCP SYN sent.");
@@ -229,10 +221,11 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
         flushSockets();
     }
 #ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "Socket state = %d", _SOCKETS[s].clientState);
+    sprintf(SOCKET_DEBUG, "Socket state = %d (SOCK_ESTABLISHED = %d)",
+            _SOCKETS[s].clientState, SOCK_ESTABLISHED);
 #endif
     return _SOCKETS[s].clientState == SOCK_ESTABLISHED;
-    //TODO: Maybe use a default timeout to receive SYN+ACK
+    //TODO: Maybe use a timeout instead of MAX_ITERATIONS to receive SYN+ACK
 }
 
 uint16_t send(SOCKET s, const uint8_t *bufferToSend, uint16_t length) {
