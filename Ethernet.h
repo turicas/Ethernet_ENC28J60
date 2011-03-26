@@ -17,7 +17,7 @@ public:
   void begin(uint8_t *, uint8_t *, uint8_t *);
   void begin(uint8_t *, uint8_t *, uint8_t *, uint8_t *);
 #ifdef ETHERSHIELD_DEBUG
-  char *returnDebug();
+  uint8_t *returnDebug();
   void clearDebug();
 #endif
   friend class Client;
@@ -26,4 +26,7 @@ public:
 
 extern EthernetClass Ethernet;
 
+#ifdef ETHERSHIELD_DEBUG
+char *debug2str(uint8_t debugCode);
+#endif
 #endif

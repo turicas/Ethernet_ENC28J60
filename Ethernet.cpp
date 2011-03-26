@@ -35,11 +35,15 @@ void EthernetClass::begin(uint8_t *mac, uint8_t *ip, uint8_t *gateway, uint8_t *
 }
 
 #ifdef ETHERSHIELD_DEBUG
-char *EthernetClass::returnDebug() {
+uint8_t *EthernetClass::returnDebug() {
     return socketDebug();
 }
 void EthernetClass::clearDebug() {
     socketClearDebug();
+}
+
+char *debug2str(uint8_t debugCode) {
+    return debugCode2String(debugCode);
 }
 #endif
 

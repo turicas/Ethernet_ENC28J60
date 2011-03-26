@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#define ETHERSHIELD_DEBUG
+//#define ETHERSHIELD_DEBUG
 
 #define SOCK_CLOSED         0x00
 #define SOCK_INIT           0x13
@@ -21,7 +21,22 @@
 typedef uint8_t SOCKET;
 
 #ifdef ETHERSHIELD_DEBUG
-char *socketDebug();
+#define DEBUG_RECEIVED_ARP_REPLY                0
+#define DEBUG_ANSWERING_RECEIVED_ARP_REQUEST    1
+#define DEBUG_IGNORING_PACKET_NOT_FOR_ME        2
+#define DEBUG_REPLYING_ECHO_REQUEST             3
+#define DEBUG_IGNORED_PACKET                    4
+#define DEBUG_RECEIVED_TCP_SYNACK_SENDING_ACK   5
+#define DEBUG_RECEIVED_TCP_SYN_SENDING_SYNACK   6
+#define DEBUG_RECEIVED_ACKFIN_CLOSING_SOCKET    7
+#define DEBUG_RECEIVED_ACK_PACKET_HAVE_NO_DATA  8
+#define DEBUG_DONT_KNOW_WHAT_TO_DO              9
+#define DEBUG_SENT_ARP_REQUEST                  10
+#define DEBUG_MAC_RECEIVED_SENDING_TCP_SYN      11
+#define DEBUG_TCP_SYN_SENT                      12
+#define DEBUG_INIT                              13
+char *debugCode2String(uint8_t debugCode);
+uint8_t *socketDebug();
 void socketClearDebug();
 #endif
 

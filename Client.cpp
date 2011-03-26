@@ -24,7 +24,11 @@ Client::Client(uint8_t *ip, uint16_t port) {
 uint8_t Client::connect() {
   if (_sock != 255)
     return 0;
-  
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(_DEBUG, "Client::connect() DEBUG A. _sock = %d",
+            _sock);
+#endif
+
   for (int i = 0; i < MAX_SOCK_NUM; i++) {
     uint8_t s = getSn_SR(i);
     if (s == SOCK_CLOSED || s == SOCK_FIN_WAIT) {
@@ -33,6 +37,10 @@ uint8_t Client::connect() {
     }
   }
   
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(_DEBUG, "Client::connect() DEBUG B. _sock = %d",
+            _sock);
+#endif
   if (_sock == 255)
     return 0;
     
@@ -40,11 +48,18 @@ uint8_t Client::connect() {
   if (_srcport + 1024 == 0) _srcport = 0;
   socket(_sock, Sn_MR_TCP, _srcport + 1024, 0);
   
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(_DEBUG, "Client::connect() DEBUG C. _sock = %d",
+            _sock);
+#endif
   if (!::connect(_sock, _ip, _port)) {
     _sock = 255;
     return 0;
   }
     
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(_DEBUG, "Client::connect() DEBUG D. _sock = %d", _sock);
+#endif
   while (status() != SOCK_ESTABLISHED) {
     delay(1);
     if (status() == SOCK_CLOSED) {
@@ -53,8 +68,17 @@ uint8_t Client::connect() {
     }
   }
   
+#ifdef ETHERSHIELD_DEBUG
+    sprintf(_DEBUG, "Client::connect() DEBUG E. _sock = %d", _sock);
+#endif
   return 1;
 }
+
+#ifdef ETHERSHIELD_DEBUG
+char *Client::debug() {
+    return _DEBUG;
+}
+#endif
 
 void Client::write(uint8_t b) {
   if (_sock != 255)

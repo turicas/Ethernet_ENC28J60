@@ -2,6 +2,7 @@
 #define Client_h
 
 #include "Print.h"
+#include "utility/socket.h"
 
 class Client : public Print {
 private:
@@ -9,6 +10,10 @@ private:
   uint8_t _sock;
   uint8_t *_ip;
   uint16_t _port;
+#ifdef ETHERSHIELD_DEBUG
+    char _DEBUG[80];
+#endif
+
 public:
   Client(uint8_t);
   Client(uint8_t *, uint16_t);
@@ -21,6 +26,9 @@ public:
   int read();
   void flush();
   void stop();
+#ifdef ETHERSHIELD_DEBUG
+    char *debug();
+#endif
   uint8_t connected();
   uint8_t operator==(int);
   uint8_t operator!=(int);

@@ -3,7 +3,7 @@
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
 #define BUFFER_SIZE         550
-#define MAX_ITERATIONS      65000
+#define MAX_ITERATIONS      1000
 
 #define NO_STATE            0
 #define GOT_MAC             1
@@ -15,16 +15,79 @@ uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
 static uint8_t buffer[BUFFER_SIZE + 1];
 uint16_t packetLength, sendPacketLength = 0;
 #ifdef ETHERSHIELD_DEBUG
-#define ETHERSHIELD_DEBUG_SIZE 70
-char SOCKET_DEBUG[ETHERSHIELD_DEBUG_SIZE];
+uint8_t SOCKET_DEBUG[80];
 
-char *socketDebug() {
+uint8_t *socketDebug() {
     return SOCKET_DEBUG;
 }
 void socketClearDebug() {
-    int i;
-    for (i = 0; i < ETHERSHIELD_DEBUG_SIZE; i++) {
-        SOCKET_DEBUG[i] = 0;
+    //free(SOCKET_DEBUG);
+    //SOCKET_DEBUG = (uint8_t *) malloc(sizeof(uint8_t));
+    SOCKET_DEBUG[0] = 255;
+}
+
+void ethershieldDebug(uint8_t debugCode) {
+    uint8_t i;
+    for (i = 0; SOCKET_DEBUG[i] != 255; i++) {}
+    SOCKET_DEBUG[i++] = debugCode;
+    SOCKET_DEBUG[i] = 255;
+
+    /*
+       int i, j, w;
+       for (i = 0; SOCKET_DEBUG[i] != '\0'; i++) {}
+       for (j = 0; toAdd[j] != '\0'; j++) {}
+       SOCKET_DEBUG = (char *) realloc(SOCKET_DEBUG, i + j + 2);
+       if (i > 0) {
+       SOCKET_DEBUG[i++] = '\n';
+       }
+       for (w = 0; w < j; w++, i++) {
+       SOCKET_DEBUG[i] = toAdd[w];
+       }
+       SOCKET_DEBUG[i] = '\0';
+     */
+}
+char *debugCode2String(uint8_t debugCode) {
+    if (debugCode == DEBUG_RECEIVED_ARP_REPLY) {
+        return "RECEIVED_ARP_REPLY";
+    }
+    else if (debugCode == DEBUG_ANSWERING_RECEIVED_ARP_REQUEST) {
+        return "ANSWERING_RECEIVED_ARP_REQUEST";
+    }
+    else if (debugCode == DEBUG_IGNORING_PACKET_NOT_FOR_ME) {
+        return "IGNORING_PACKET_NOT_FOR_ME";
+    }
+    else if (debugCode == DEBUG_REPLYING_ECHO_REQUEST) {
+        return "REPLYING_ECHO_REQUEST";
+    }
+    else if (debugCode == DEBUG_IGNORED_PACKET) {
+        return "IGNORED_PACKET";
+    }
+    else if (debugCode == DEBUG_RECEIVED_TCP_SYNACK_SENDING_ACK) {
+        return "RECEIVED_TCP_SYNACK_SENDING_ACK";
+    }
+    else if (debugCode == DEBUG_RECEIVED_TCP_SYN_SENDING_SYNACK) {
+        return "RECEIVED_TCP_SYN_SENDING_SYNACK";
+    }
+    else if (debugCode == DEBUG_RECEIVED_ACKFIN_CLOSING_SOCKET) {
+        return "RECEIVED_ACKFIN_CLOSING_SOCKET";
+    }
+    else if (debugCode == DEBUG_RECEIVED_ACK_PACKET_HAVE_NO_DATA) {
+        return "DONT_KNOW_WHAT_TO_DO";
+    }
+    else if (debugCode == DEBUG_DONT_KNOW_WHAT_TO_DO) {
+        return "DONT_KNOW_WHAT_TO_DO";
+    }
+    else if (debugCode == DEBUG_SENT_ARP_REQUEST) {
+        return "SENT_ARP_REQUEST";
+    }
+    else if (debugCode == DEBUG_MAC_RECEIVED_SENDING_TCP_SYN) {
+        return "MAC_RECEIVED_SENDING_TCP_SYN";
+    }
+    else if (debugCode == DEBUG_TCP_SYN_SENT) {
+        return "TCP_SYN_SENT";
+    }
+    else if (debugCode == DEBUG_INIT) {
+        return "INIT";
     }
 }
 #endif
@@ -53,9 +116,6 @@ void turnLEDsOff() {
 #endif
 
 uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
-#ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "Called socket()");
-#endif
     _SOCKETS[s].protocol = protocol;
     _SOCKETS[s].sourcePort = sourcePort;
     _SOCKETS[s].flag = flag;
@@ -77,7 +137,7 @@ void flushSockets() {
         if (arp_packet_is_myreply_arp(buffer)) {
             uint8_t i;
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Received ARP reply!");
+            ethershieldDebug(DEBUG_RECEIVED_ARP_REPLY);
 #endif
             for (i = 0; i < 6; i++) {
                 _SOCKETS[0].destinationMac[i] = buffer[ETH_SRC_MAC + i];
@@ -87,21 +147,25 @@ void flushSockets() {
         }
         else {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Received ARP request. Answering.");
+            ethershieldDebug(DEBUG_ANSWERING_RECEIVED_ARP_REQUEST);
 #endif
             make_arp_answer_from_request(buffer);
         }
     }
     else if (!eth_type_is_ip_and_my_ip(buffer, packetLength)) {
 #ifdef ETHERSHIELD_DEBUG
-        sprintf(SOCKET_DEBUG, "This packet is not for me! Ignoring...");
+        ethershieldDebug(DEBUG_IGNORING_PACKET_NOT_FOR_ME);
 #endif
         return;
     }
     else if (buffer[IP_PROTO_P] == IP_PROTO_ICMP_V &&
-             buffer[ICMP_TYPE_P] == ICMP_TYPE_ECHOREQUEST_V) {
+            buffer[ICMP_TYPE_P] == ICMP_TYPE_ECHOREQUEST_V) {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "ECHO REQUEST from %d.%d.%d.%d. Sending reply.", buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1], buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3]);
+        //char myStr[80];
+        //sprintf(myStr, "Replying ECHO REQUEST from %d.%d.%d.%d",
+        //        buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
+        //        buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3]);
+        ethershieldDebug(DEBUG_REPLYING_ECHO_REQUEST);
 #endif
         make_echo_reply_from_request(buffer, packetLength);
     }
@@ -111,17 +175,19 @@ void flushSockets() {
         uint8_t i, socketSelected = 255;
         for (i = 0; i < MAX_SOCK_NUM; i++) {
             if (_SOCKETS[i].sourcePort == destinationPort &&
-                _SOCKETS[i].state == SOCK_LISTEN) {
+                    _SOCKETS[i].state == SOCK_LISTEN) {
                 socketSelected = i;
                 break;
             }
         }
         if (socketSelected == 255) {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Packet from: %d.%d.%d.%d:%d ignored.",
-                    buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
-                    buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3],
-                    destinationPort);
+            //char myStr[80];
+            //sprintf(myStr, "Packet from: %d.%d.%d.%d:%d ignored.",
+            //        buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
+            //        buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3],
+            //        destinationPort);
+            ethershieldDebug(DEBUG_IGNORED_PACKET);
 #endif
             //return; //TODO: return!
             socketSelected = 0; //TODO: remove this hack
@@ -130,17 +196,17 @@ void flushSockets() {
         //DEBUG: ok, the TCP packet is for me and I want it.
         if (buffer[TCP_FLAGS_P] == (TCP_FLAG_SYN_V | TCP_FLAG_ACK_V)) {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Received TCP SYN+ACK. Sending ACK.", socketSelected);
+            ethershieldDebug(DEBUG_RECEIVED_TCP_SYNACK_SENDING_ACK);
 #endif
             //TODO: verify if I'm waiting for this SYN+ACK
-            make_tcp_ack_from_any(buffer);
+            make_tcp_ack_from_any(buffer); //TODO: send ACK using tcp_client_send_packet
             _SOCKETS[0].clientState = SOCK_ESTABLISHED;
             //TODO: write code to get socket id instead of 0
             return;
         }
         else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Received TCP SYN. Sending SYN+ACK.", socketSelected);
+            ethershieldDebug(DEBUG_RECEIVED_TCP_SYN_SENDING_SYNACK);
 #endif
             _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
             make_tcp_synack_from_syn(buffer);
@@ -151,7 +217,7 @@ void flushSockets() {
             if (!data) {
                 if (buffer[TCP_FLAGS_P] & TCP_FLAGS_FIN_V) {
 #ifdef ETHERSHIELD_DEBUG
-                    sprintf(SOCKET_DEBUG, "Received ACK+FIN. Closing socket.", socketSelected);
+                    ethershieldDebug(DEBUG_RECEIVED_ACKFIN_CLOSING_SOCKET);
 #endif
                     make_tcp_ack_from_any(buffer);
                     _SOCKETS[socketSelected].state = SOCK_CLOSED;
@@ -160,7 +226,7 @@ void flushSockets() {
             }
             else {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Received ACK. Packet have data.", socketSelected);
+                ethershieldDebug(DEBUG_RECEIVED_ACK_PACKET_HAVE_NO_DATA);
 #endif
                 int i, dataSize = packetLength - (&buffer[data] - buffer);
                 _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
@@ -175,7 +241,7 @@ void flushSockets() {
         }
         else {
 #ifdef ETHERSHIELD_DEBUG
-            sprintf(SOCKET_DEBUG, "Don't know what to do! o.O");
+            ethershieldDebug(DEBUG_DONT_KNOW_WHAT_TO_DO);
 #endif
         }
     }
@@ -187,14 +253,17 @@ uint8_t listen(SOCKET s) {
 }
 
 uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
-    uint16_t packetChecksum, i, destinationPort, sourcePort;
+    uint16_t packetChecksum, i, sourcePort;
     char buffer[59];
+#ifdef ETHERSHIELD_DEBUG
+    char myStr[80];
+#endif
 
     //TODO: create an ARP table?
     make_arp_request(buffer, destinationIp);
     _SOCKETS[s].clientState = ARP_REQUEST_SENT;
 #ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "Sent ARP request.");
+    ethershieldDebug(DEBUG_SENT_ARP_REQUEST);
 #endif
 
     for (i = 0; _SOCKETS[s].clientState != GOT_MAC && i < MAX_ITERATIONS; i++) {
@@ -204,25 +273,25 @@ uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
         return 0;
     }
 #ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "MAC received! Sending TCP SYN.");
+    ethershieldDebug(DEBUG_MAC_RECEIVED_SENDING_TCP_SYN);
 #endif
 
-    uint16_t sourcePort = (buffer[TCP_SRC_PORT_H_P] << 8) | buffer[TCP_SRC_PORT_L_P];
-    uint16_t destinationPort = (buffer[TCP_DST_PORT_H_P] << 8) | buffer[TCP_DST_PORT_L_P];
+    sourcePort = 42845; //TODO: change this
     tcp_client_send_packet(buffer, destinationPort, sourcePort, TCP_FLAG_SYN_V,
-                           1, 1, 0, 0, _SOCKETS[s].destinationMac,
-                           destinationIp);
+            1, 1, 0, 0, _SOCKETS[s].destinationMac,
+            destinationIp);
     _SOCKETS[s].clientState = TCP_SYN_SENT;
 #ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "TCP SYN sent.");
+    ethershieldDebug(DEBUG_TCP_SYN_SENT);
 #endif
 
     for (i = 0; _SOCKETS[s].clientState != SOCK_ESTABLISHED && i < MAX_ITERATIONS; i++) {
         flushSockets();
     }
 #ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "Socket state = %d (SOCK_ESTABLISHED = %d)",
-            _SOCKETS[s].clientState, SOCK_ESTABLISHED);
+    //sprintf(myStr, "Socket state = %d (SOCK_ESTABLISHED = %d)",
+    //        _SOCKETS[s].clientState, SOCK_ESTABLISHED);
+    //ethershieldDebug(myStr);
 #endif
     return _SOCKETS[s].clientState == SOCK_ESTABLISHED;
     //TODO: Maybe use a timeout instead of MAX_ITERATIONS to receive SYN+ACK
@@ -247,19 +316,19 @@ uint16_t recv(SOCKET s, uint8_t *buffer, uint16_t length) {
         }
     }
     /*
-    for (i = _SOCKETS[s].firstByte, j = 0; i < _SOCKETS[s].bytesToRead && i < length; i++, j++) {
-        buffer[j] = _SOCKETS[s].buffer[i];
-    }
-    if (i + 1 == _SOCKETS[s].bytesToRead) {
-        free(_SOCKETS[s].buffer);
-        _SOCKETS[s].firstByte = 0;
-        _SOCKETS[s].bytesToRead = 0;
-    }
-    else {
-        _SOCKETS[s].bytesToRead -= i;
-        _SOCKETS[s].firstByte = i;
-    }
-    */
+       for (i = _SOCKETS[s].firstByte, j = 0; i < _SOCKETS[s].bytesToRead && i < length; i++, j++) {
+       buffer[j] = _SOCKETS[s].buffer[i];
+       }
+       if (i + 1 == _SOCKETS[s].bytesToRead) {
+       free(_SOCKETS[s].buffer);
+       _SOCKETS[s].firstByte = 0;
+       _SOCKETS[s].bytesToRead = 0;
+       }
+       else {
+       _SOCKETS[s].bytesToRead -= i;
+       _SOCKETS[s].firstByte = i;
+       }
+     */
 }
 
 uint8_t disconnect(SOCKET s) {
@@ -268,8 +337,8 @@ uint8_t disconnect(SOCKET s) {
         make_tcp_ack_with_data(buffer, sendPacketLength);
         sendPacketLength = 0;
     }
-    //TODO:send FYN packet
-    //TODO:wait to receive ACK?
+    //TODO: send FYN packet
+    //TODO: wait to receive ACK?
     _SOCKETS[s].state = SOCK_CLOSED; //TODO: remove this hack
 }
 
@@ -283,9 +352,6 @@ uint8_t getSn_SR(SOCKET s) {
     //TODO: change on standard Ethernet library to do not use this
 
     flushSockets();
-#ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "getSn_SR(%d) = %d", s, _SOCKETS[s].state);
-#endif
     return _SOCKETS[s].state;
 }
 
@@ -299,8 +365,11 @@ uint16_t getSn_RX_RSR(SOCKET s) {
 
 void iinchip_init() {
     //TODO: change on standard Ethernet library to do not use this
-    
+
     //do nothing
+#ifdef ETHERSHIELD_DEBUG
+    socketClearDebug();
+#endif
 }
 
 void sysinit(uint8_t txSize, uint8_t rxSize) {
@@ -310,7 +379,7 @@ void sysinit(uint8_t txSize, uint8_t rxSize) {
         _SOCKETS[i].state = SOCK_CLOSED;
     }
 #ifdef ETHERSHIELD_DEBUG
-    sprintf(SOCKET_DEBUG, "init"); //TODO: remove
+    ethershieldDebug(DEBUG_INIT);
 #endif
 }
 
