@@ -20,7 +20,7 @@ The goal of the project will be achieved as an Arduino user can use the same cod
 Usage
 =====
 
-Download the tarball and put the library inside `sketchbook/libraries/` folder.
+[Download the tarball at GitHub](https://github.com/turicas/Ethernet_ENC28J60/tarball/master) and put the library inside `sketchbook/libraries/` folder.
 If you just want to test without debugging, use the examples `WebServerSimple` and `WebServerSimpleLED`.
 
 *WARNING:* This is a work-in-progress project and need more tests to be used in production environments!
