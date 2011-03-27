@@ -17,6 +17,15 @@ The goal of the project will be achieved as an Arduino user can use the same cod
 </div>
 
 
+Usage
+=====
+
+Download the tarball and put the library inside `sketchbook/libraries/` folder.
+If you just want to test without debugging, use the examples `WebServerSimple` and `WebServerSimpleLED`.
+
+*WARNING:* This is a work-in-progress project and need more tests to be used in production environments!
+
+
 Limitations
 ===========
 
@@ -25,8 +34,6 @@ For now that are some limitations that will be removed in a near future:
 - Just one socket per time;
 - Only support for TCP server -- `connect()`, `sendto()` and `recvfrom()` don't work yet;
 - Can only "answer" to the last packet received.
-
-*WARNING:* This is a work-in-progress project and need more tests to be used in production environments!
 
 Architecture
 ============
@@ -73,3 +80,4 @@ You can see what is happening using the Serial Monitor on Arduino IDE if you unc
 
     //#define ETHERSHIELD_DEBUG
 
+Please use the examples `WebServerDEBUG` and `WebClientDEBUG` for debugging (and to learn how to do it).

@@ -20,7 +20,6 @@ void printSocketDebug() {
     }
     Ethernet.clearDebug();
   }
-  Serial.println(client.debug());
 }
 #endif
 
@@ -34,6 +33,7 @@ void setup() {
 
 #ifdef ETHERSHIELD_DEBUG
   printSocketDebug();
+  Serial.println(client.debug());
 #endif
   
   if (isConnected) {
