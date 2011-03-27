@@ -13,3 +13,5 @@ http://tuxgraphics.org/common/src2/article09051/
 http://ww1.microchip.com/downloads/en/DeviceDoc/39662b.pdf
 http://www.ljcv.net/eip10/
 http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1290366426
+
+DHCP and DNS: http://www.mcqn.com/weblog/dhcp_and_dns_arduino
