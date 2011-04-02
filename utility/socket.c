@@ -200,7 +200,7 @@ void flushSockets() {
 #endif
             //TODO: verify if I'm waiting for this SYN+ACK
             make_tcp_ack_from_any(buffer); //TODO: send ACK using tcp_client_send_packet
-            _SOCKETS[0].clientState = SOCK_ESTABLISHED;
+            _SOCKETS[socketSelected].clientState = SOCK_ESTABLISHED;
             //TODO: write code to get socket id instead of 0
             return;
         }
