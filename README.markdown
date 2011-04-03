@@ -23,12 +23,12 @@ Usage
 [Download the tarball at GitHub](https://github.com/turicas/Ethernet_ENC28J60/tarball/master) and put the library inside `sketchbook/libraries/` folder.
 If you just want to test without debugging, use the examples `WebServerSimple` and `WebServerSimpleLED`.
 
-*WARNING:* This is a work-in-progress project and need more tests to be used in production environments!
+**WARNING:** This is a work-in-progress project and need more tests to be used in production environments!
 
 Using with Arduino Mega
 -----------------------
 
-This library is compatible with Arduino Mega, but *you need a hardware-hack* so ENC28J60 can communicate (using SPI) with Arduino. Please refer to [http://mcukits.com/2009/04/06/arduino-ethernet-shield-mega-hack/](http://mcukits.com/2009/04/06/arduino-ethernet-shield-mega-hack/) for more information.
+This library is compatible with Arduino Mega, but **you need a hardware-hack** so ENC28J60 can communicate (using SPI) with Arduino. Please refer to <http://mcukits.com/2009/04/06/arduino-ethernet-shield-mega-hack/> for more information.
 
 
 Limitations
