@@ -48,6 +48,8 @@ etherShield-related Developments
 
 <https://github.com/turicas/Ethernet_ENC28J60> (this! ;-)
 
+<http://jeelabs.net/projects/cafe/repository/entry/EtherCard> - great helper functions for ENC28J60 and protocol implementations (DNS).
+
 ### Third-party
 
 <http://www.r3cube.com/Drivers-software/etherShield.zip>
