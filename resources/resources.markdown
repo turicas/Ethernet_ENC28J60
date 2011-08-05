@@ -4,6 +4,12 @@ ENC28J60 + ATMega/Arduino Resources
 Companies that sell ENC28J60
 ----------------------------
 
+Not all of the links below are verified (even about the goodness of the store and about compatibility with this library).
+
+If you own a store that sells an ENC28J60-based Ethernet module, I can test and adapt this Arduino library to work with -- please contact me at `alvarojusten [no spam _AT_ please] gmail [no spam _DOT_ please] com`.
+
+RECOMMENDED - verified: <http://iteadstudio.com/store/index.php?main_page=product_info&cPath=18&products_id=349>
+
 <http://www.thaieasyelec.net/index.php/Arduino/Ethernet-Arduino-Shield-ENC28J60/p_128.html>
 
 <http://www.thaieasyelec.net/index.php/Ethernet-Module/ENC28J60-Ethernet-Module/p_103.html>
@@ -12,9 +18,15 @@ Companies that sell ENC28J60
 
 <http://www.nuelectronics.com/estore/index.php?main_page=project_eth>
 
+<http://www.nuelectronics.com/estore/index.php?main_page=product_info&products_id=4>
+
+<http://item.taobao.com/item.htm?id=5136614549>
+
 <http://www.ekitszone.com/Products/4-enc28j60-ethernet-shield-for-arduion.aspx>
 
 <http://www.sureelectronics.net/goods.php?id=1180>
+
+
 
 
 TCP/IP Resources
@@ -54,6 +66,7 @@ etherShield-related Developments
 
 <http://www.r3cube.com/Drivers-software/etherShield.zip>
 
+<http://www.embeddedmarket.com/Products/ENC28J60-Ethernet-Module/>
 
 Related Discussions
 -------------------
@@ -79,6 +92,8 @@ Related Discussions
 <http://wiki.hackspace.org.uk/wiki/Project:Ethernet_Arduino>
 
 DHCP and DNS: <http://www.mcqn.com/weblog/dhcp_and_dns_arduino>
+
+<http://dereenigne.org/electronics/arduino/enc28j60-breakout-board>
 
 
 Other Ethernet controllers

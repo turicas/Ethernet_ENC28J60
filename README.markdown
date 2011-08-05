@@ -17,6 +17,12 @@ The goal of the project will be achieved as an Arduino user can use the same cod
 </div>
 
 
+Where to buy
+------------
+
+Please read the file `resources/resources.markdown`.
+
+
 Usage
 =====
 
