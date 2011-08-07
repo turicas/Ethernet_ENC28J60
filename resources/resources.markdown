@@ -72,6 +72,7 @@ etherShield-related Developments
 
 <http://www.geeetech.com/?main_page=wordpress&p=232>
 
+
 Related Discussions
 -------------------
 
@@ -115,6 +116,7 @@ Related/Not Categorized Resources
 
 <http://www.pachube.com/>
 
+Nanode: ATMega + ENC28J60 board: <http://wiki.hackspace.org.uk/wiki/Project:Nanode>
 
 Alternatives
 ============
