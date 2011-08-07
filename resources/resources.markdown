@@ -10,6 +10,8 @@ If you own a store that sells an ENC28J60-based Ethernet module, I can test and 
 
 RECOMMENDED - verified: <http://iteadstudio.com/store/index.php?main_page=product_info&cPath=18&products_id=349>
 
+<http://www.geeetech.com/index.php?main_page=product_info&products_id=263>
+
 <http://www.thaieasyelec.net/index.php/Arduino/Ethernet-Arduino-Shield-ENC28J60/p_128.html>
 
 <http://www.thaieasyelec.net/index.php/Ethernet-Module/ENC28J60-Ethernet-Module/p_103.html>
@@ -68,6 +70,8 @@ etherShield-related Developments
 
 <http://www.embeddedmarket.com/Products/ENC28J60-Ethernet-Module/>
 
+<http://www.geeetech.com/?main_page=wordpress&p=232>
+
 Related Discussions
 -------------------
 
@@ -110,3 +114,10 @@ Related/Not Categorized Resources
 ---------------------------------
 
 <http://www.pachube.com/>
+
+
+Alternatives
+============
+
+
+W5100 Ethernet shield <http://www.diybin.com/products/Seeedstudio-Wiznet-Ethernet-shield-%252dw5100.html>
