@@ -67,19 +67,19 @@ void loop() {
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println();
-          client.println("<html><meta http-equiv=\"refresh\" content=\"1\"><body>");
+          client.println("<html><meta http-equiv=\"refresh\" content=\"3\"><body>");
           
           // output the value of each analog input pin
           for (int i = 0; i < 6; i++) {
-            client.print("Analog ");
+            client.print("A");
             client.print(i);
-            client.print(" = <b>");
+            client.print(" = ");
             client.print(analogRead(i));
-            client.println("</b><br />");
+            client.print("<br>");
           }
-          client.print("millis() = <b>");
+          client.print("\nmillis() = <b>");
           client.print(millis());
-          client.println("</b></html></body>");
+          client.print("</b></html></body>");
           break;
         }
         if (c == '\n') {

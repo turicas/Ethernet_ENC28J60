@@ -2,7 +2,7 @@
 #include "net.h"
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
-#define BUFFER_SIZE         550
+#define BUFFER_SIZE         700
 #define MAX_ITERATIONS      1000
 
 #define NO_STATE            0
@@ -15,7 +15,7 @@ uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
 static uint8_t buffer[BUFFER_SIZE + 1];
 uint16_t packetLength, sendPacketLength = 0;
 #ifdef ETHERSHIELD_DEBUG
-uint8_t SOCKET_DEBUG[80];
+uint8_t SOCKET_DEBUG[10];
 
 uint8_t *socketDebug() {
     return SOCKET_DEBUG;
@@ -126,8 +126,6 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
 }
 
 void flushSockets() {
-    uint16_t data;
-
     packetLength = enc28j60PacketReceive(BUFFER_SIZE, buffer);
     if (!packetLength) {
         //DEBUG: no data available for reading!
@@ -175,7 +173,7 @@ void flushSockets() {
         uint8_t i, socketSelected = 255;
         for (i = 0; i < MAX_SOCK_NUM; i++) {
             if (_SOCKETS[i].sourcePort == destinationPort &&
-                    _SOCKETS[i].state == SOCK_LISTEN) {
+                _SOCKETS[i].state == SOCK_LISTEN) {
                 socketSelected = i;
                 break;
             }
@@ -212,6 +210,7 @@ void flushSockets() {
             make_tcp_synack_from_syn(buffer);
         }
         else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) {
+            uint16_t data;
             init_len_info(buffer);
             data = get_tcp_data_pointer();
             if (!data) {

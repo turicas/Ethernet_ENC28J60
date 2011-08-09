@@ -344,19 +344,17 @@ void make_arp_answer_from_request(uint8_t *buf)
     enc28j60PacketSend(42,buf); 
 }
 
-void make_echo_reply_from_request(uint8_t *buf,uint16_t len)
-{
+void make_echo_reply_from_request(uint8_t *buf, uint16_t len) {
     make_eth(buf);
     make_ip(buf);
-    buf[ICMP_TYPE_P]=ICMP_TYPE_ECHOREPLY_V;
+    buf[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;
     // we changed only the icmp.type field from request(=8) to reply(=0).
     // we can therefore easily correct the checksum:
-    if (buf[ICMP_CHECKSUM_P] > (0xff-0x08)){
-        buf[ICMP_CHECKSUM_P+1]++;
+    if (buf[ICMP_CHECKSUM_P] > (0xff - 0x08)) {
+        buf[ICMP_CHECKSUM_P + 1]++;
     }
-    buf[ICMP_CHECKSUM_P]+=0x08;
-    //
-    enc28j60PacketSend(len,buf);
+    buf[ICMP_CHECKSUM_P] += 0x08;
+    enc28j60PacketSend(len, buf);
 }
 
 // you can send a max of 220 bytes of data
@@ -394,8 +392,8 @@ void make_udp_reply_from_request(uint8_t *buf,char *data,uint8_t datalen,uint16_
 
 void make_tcp_synack_from_syn(uint8_t *buf) {
     uint16_t ck;
-    uint8_t newBuffer[IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN];
-    for (int i = 0; i < IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN; i++) {
+    uint8_t newBuffer[IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN], i;
+    for (i = 0; i < IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN; i++) {
         newBuffer[i] = buf[i];
     }
     make_eth(newBuffer);
@@ -482,30 +480,30 @@ uint16_t fill_tcp_data2(uint8_t *buf, uint16_t pos, const char *s, uint8_t lengt
 
 // Make just an ack packet with no tcp data inside
 // This will modify the eth/ip/tcp header 
-void make_tcp_ack_from_any(uint8_t *buf)
-{
+void make_tcp_ack_from_any(uint8_t *buf) {
     uint16_t j;
     make_eth(buf);
     // fill the header:
-    buf[TCP_FLAG_P]=TCP_FLAG_ACK_V;
-    if (info_data_len==0){
+    buf[TCP_FLAG_P] = TCP_FLAG_ACK_V;
+    if (info_data_len == 0){
         // if there is no data then we must still acknoledge one packet
-        make_tcphead(buf,1,0,1); // no options
-    }else{
-        make_tcphead(buf,info_data_len,0,1); // no options
+        make_tcphead(buf, 1, 0, 1); // no options
+    }
+    else {
+        make_tcphead(buf, info_data_len, 0, 1); // no options
     }
 
     // total length field in the IP header must be set:
     // 20 bytes IP + 20 bytes tcp (when no options) 
-    j=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN;
-    buf[IP_TOTLEN_H_P]=j>>8;
-    buf[IP_TOTLEN_L_P]=j& 0xff;
+    j = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN;
+    buf[IP_TOTLEN_H_P] = j >> 8;
+    buf[IP_TOTLEN_L_P] = j & 0xff;
     make_ip(buf);
     // calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + data len
-    j=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN,2);
-    buf[TCP_CHECKSUM_H_P]=j>>8;
-    buf[TCP_CHECKSUM_L_P]=j& 0xff;
-    enc28j60PacketSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+ETH_HEADER_LEN,buf);
+    j = checksum(&buf[IP_SRC_P], 8 + TCP_HEADER_LEN_PLAIN, 2);
+    buf[TCP_CHECKSUM_H_P] = j >> 8;
+    buf[TCP_CHECKSUM_L_P] = j & 0xff;
+    enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + ETH_HEADER_LEN, buf);
 }
 
 // you must have called init_len_info at some time before calling this function
