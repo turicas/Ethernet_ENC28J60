@@ -1,8 +1,8 @@
 #include <Ethernet.h>
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-byte ip[] = { 192, 168, 111, 2 };
-byte server[] = { 192, 168, 111, 1 };
+byte ip[] = { 192, 168, 1, 123 };
+byte server[] = { 192, 168, 1, 2 };
 
 Client client(server, 80);
 

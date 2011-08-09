@@ -1,7 +1,7 @@
 #include <Ethernet.h>
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-byte ip[] = { 192, 168, 111, 2 };
+byte ip[] = { 192, 168, 1, 123 };
 
 Server server(80);
 
@@ -67,14 +67,19 @@ void loop() {
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println();
+          client.println("<html><meta http-equiv=\"refresh\" content=\"1\"><body>");
           
           // output the value of each analog input pin
-          client.print("Analog input 0 = <b>");
-          client.print(analogRead(0));
-          client.println("</b><br>");
+          for (int i = 0; i < 6; i++) {
+            client.print("Analog ");
+            client.print(i);
+            client.print(" = <b>");
+            client.print(analogRead(i));
+            client.println("</b><br />");
+          }
           client.print("millis() = <b>");
-          client.println(millis());
-          client.println("</b><br>");
+          client.print(millis());
+          client.println("</b></html></body>");
           break;
         }
         if (c == '\n') {

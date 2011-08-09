@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-//#define ETHERSHIELD_DEBUG
+#define ETHERSHIELD_DEBUG
 
 #define SOCK_CLOSED         0x00
 #define SOCK_INIT           0x13

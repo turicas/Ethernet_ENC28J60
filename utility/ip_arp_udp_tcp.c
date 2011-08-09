@@ -392,23 +392,26 @@ void make_udp_reply_from_request(uint8_t *buf,char *data,uint8_t datalen,uint16_
     enc28j60PacketSend(UDP_HEADER_LEN+IP_HEADER_LEN+ETH_HEADER_LEN+datalen,buf);
 }
 
-void make_tcp_synack_from_syn(uint8_t *buf)
-{
+void make_tcp_synack_from_syn(uint8_t *buf) {
     uint16_t ck;
-    make_eth(buf);
+    uint8_t newBuffer[IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN];
+    for (int i = 0; i < IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN; i++) {
+        newBuffer[i] = buf[i];
+    }
+    make_eth(newBuffer);
     // total length field in the IP header must be set:
     // 20 bytes IP + 24 bytes (20tcp+4tcp options)
-    buf[IP_TOTLEN_H_P]=0;
-    buf[IP_TOTLEN_L_P]=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4;
-    make_ip(buf);
-    buf[TCP_FLAG_P]=TCP_FLAGS_SYNACK_V;
-    make_tcphead(buf,1,1,0);
+    newBuffer[IP_TOTLEN_H_P] = 0;
+    newBuffer[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
+    make_ip(newBuffer);
+    newBuffer[TCP_FLAG_P] = TCP_FLAGS_SYNACK_V;
+    make_tcphead(newBuffer, 1, 1, 0);
     // calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
-    ck=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN+4,2);
-    buf[TCP_CHECKSUM_H_P]=ck>>8;
-    buf[TCP_CHECKSUM_L_P]=ck& 0xff;
+    ck = checksum(&newBuffer[IP_SRC_P], 8 + TCP_HEADER_LEN_PLAIN + 4, 2);
+    newBuffer[TCP_CHECKSUM_H_P] = ck >> 8;
+    newBuffer[TCP_CHECKSUM_L_P] = ck & 0xff;
     // add 4 for option mss:
-    enc28j60PacketSend(IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4+ETH_HEADER_LEN,buf);
+    enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN, newBuffer);
 }
 
 // get a pointer to the start of tcp data in buf
