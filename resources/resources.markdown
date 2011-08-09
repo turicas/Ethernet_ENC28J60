@@ -118,6 +118,8 @@ Related/Not Categorized Resources
 
 Nanode: ATMega + ENC28J60 board: <http://wiki.hackspace.org.uk/wiki/Project:Nanode>
 
+Ethduino: An Ethernet Enabled Arduino: <http://trac.mlalonde.net/Ethduino/>
+
 Alternatives
 ============
 
