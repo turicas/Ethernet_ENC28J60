@@ -14,6 +14,7 @@ uint8_t myMacAddress[6], myIpAddress[4], myGatewayIpAddress[4],
         mySubnetAddress[4];
 static uint8_t buffer[BUFFER_SIZE + 1];
 uint16_t packetLength;
+
 #ifdef ETHERSHIELD_DEBUG
 static void serial_write(unsigned char c) {
     while (!(UCSR0A & (1 << UDRE0))) {}
@@ -24,53 +25,6 @@ void ethershieldDebug(char *message) {
     uint8_t i;
     for (i = 0; message[i] != '\0'; i++) {
         serial_write(message[i]);
-    }
-}
-char *debugCode2String(uint8_t debugCode) {
-    if (debugCode == DEBUG_RECEIVED_ARP_REPLY) {
-        return "RECEIVED_ARP_REPLY";
-    }
-    else if (debugCode == DEBUG_ANSWERING_RECEIVED_ARP_REQUEST) {
-        return "ANSWERING_RECEIVED_ARP_REQUEST";
-    }
-    else if (debugCode == DEBUG_IGNORING_PACKET_NOT_FOR_ME) {
-        return "IGNORING_PACKET_NOT_FOR_ME";
-    }
-    else if (debugCode == DEBUG_REPLYING_ECHO_REQUEST) {
-        return "REPLYING_ECHO_REQUEST";
-    }
-    else if (debugCode == DEBUG_IGNORED_PACKET) {
-        return "IGNORED_PACKET";
-    }
-    else if (debugCode == DEBUG_RECEIVED_TCP_SYNACK_SENDING_ACK) {
-        return "RECEIVED_TCP_SYNACK_SENDING_ACK";
-    }
-    else if (debugCode == DEBUG_RECEIVED_TCP_SYN_SENDING_SYNACK) {
-        return "RECEIVED_TCP_SYN_SENDING_SYNACK";
-    }
-    else if (debugCode == DEBUG_RECEIVED_ACKFIN_CLOSING_SOCKET) {
-        return "RECEIVED_ACKFIN_CLOSING_SOCKET";
-    }
-    else if (debugCode == DEBUG_RECEIVED_ACK_PACKET_HAVE_NO_DATA) {
-        return "RECEIVED_ACK_PACKET_HAVE_NO_DATA";
-    }
-    else if (debugCode == DEBUG_RECEIVED_ACK_PACKET_WITH_DATA) {
-        return "RECEIVED_ACK_PACKET_WITH_DATA";
-    }
-    else if (debugCode == DEBUG_DONT_KNOW_WHAT_TO_DO) {
-        return "DONT_KNOW_WHAT_TO_DO";
-    }
-    else if (debugCode == DEBUG_SENT_ARP_REQUEST) {
-        return "SENT_ARP_REQUEST";
-    }
-    else if (debugCode == DEBUG_MAC_RECEIVED_SENDING_TCP_SYN) {
-        return "MAC_RECEIVED_SENDING_TCP_SYN";
-    }
-    else if (debugCode == DEBUG_TCP_SYN_SENT) {
-        return "TCP_SYN_SENT";
-    }
-    else if (debugCode == DEBUG_INIT) {
-        return "INIT";
     }
 }
 #endif
