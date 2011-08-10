@@ -24,7 +24,6 @@
 #include "net.h"
 #include "enc28j60.h"
 
-static uint8_t wwwport=80;
 static uint8_t macaddr[6];
 static uint8_t ipaddr[4];
 static int16_t info_hdr_len=0;
@@ -53,7 +52,7 @@ static uint8_t seqnum=0xa; // my initial tcp sequence number
 // http://www.netfor2.com/checksum.html
 // http://www.msc.uky.edu/ken/cs471/notes/chap3.htm
 // The RFC has also a C code example: http://www.faqs.org/rfcs/rfc1071.html
-uint16_t checksum(uint8_t *buf, uint16_t len,uint8_t type){
+uint16_t checksum(uint8_t *buf, uint16_t len,uint8_t type) {
     // type 0=ip 
     //      1=udp
     //      2=tcp
@@ -94,9 +93,8 @@ uint16_t checksum(uint8_t *buf, uint16_t len,uint8_t type){
 }
 
 // you must call this function once before you use any of the other functions:
-void init_ip_arp_udp_tcp(uint8_t *mymac,uint8_t *myip,uint8_t wwwp){
+void init_ip_arp_udp_tcp(uint8_t *mymac, uint8_t *myip) {
     uint8_t i=0;
-    wwwport=wwwp;
     while(i<4){
         ipaddr[i]=myip[i];
         i++;
@@ -318,9 +316,6 @@ void make_tcphead(uint8_t *buf,uint16_t rel_ack_num,uint8_t mss,uint8_t cp_seq)
     }
 }
 
-
-
-
 void make_arp_answer_from_request(uint8_t *buf)
 {
     uint8_t i=0;
@@ -392,24 +387,20 @@ void make_udp_reply_from_request(uint8_t *buf,char *data,uint8_t datalen,uint16_
 
 void make_tcp_synack_from_syn(uint8_t *buf) {
     uint16_t ck;
-    uint8_t newBuffer[IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN], i;
-    for (i = 0; i < IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN; i++) {
-        newBuffer[i] = buf[i];
-    }
-    make_eth(newBuffer);
+    make_eth(buf);
     // total length field in the IP header must be set:
     // 20 bytes IP + 24 bytes (20tcp+4tcp options)
-    newBuffer[IP_TOTLEN_H_P] = 0;
-    newBuffer[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
-    make_ip(newBuffer);
-    newBuffer[TCP_FLAG_P] = TCP_FLAGS_SYNACK_V;
-    make_tcphead(newBuffer, 1, 1, 0);
+    buf[IP_TOTLEN_H_P] = 0;
+    buf[IP_TOTLEN_L_P] = IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4;
+    make_ip(buf);
+    buf[TCP_FLAG_P] = TCP_FLAGS_SYNACK_V;
+    make_tcphead(buf, 1, 1, 0);
     // calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
-    ck = checksum(&newBuffer[IP_SRC_P], 8 + TCP_HEADER_LEN_PLAIN + 4, 2);
-    newBuffer[TCP_CHECKSUM_H_P] = ck >> 8;
-    newBuffer[TCP_CHECKSUM_L_P] = ck & 0xff;
+    ck = checksum(&buf[IP_SRC_P], 8 + TCP_HEADER_LEN_PLAIN + 4, 2);
+    buf[TCP_CHECKSUM_H_P] = ck >> 8;
+    buf[TCP_CHECKSUM_L_P] = ck & 0xff;
     // add 4 for option mss:
-    enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN, newBuffer);
+    enc28j60PacketSend(IP_HEADER_LEN + TCP_HEADER_LEN_PLAIN + 4 + ETH_HEADER_LEN, buf);
 }
 
 // get a pointer to the start of tcp data in buf
@@ -518,7 +509,8 @@ void make_tcp_ack_with_data(uint8_t *buf,uint16_t dlen)
     // This code requires that we send only one data packet
     // because we keep no state information. We must therefore set
     // the fin here:
-    buf[TCP_FLAG_P]=TCP_FLAG_ACK_V|TCP_FLAG_PUSH_V|TCP_FLAG_FIN_V;
+    buf[TCP_FLAG_P] = TCP_FLAG_ACK_V | TCP_FLAG_PUSH_V | TCP_FLAG_FIN_V;
+    //buf[TCP_FLAG_P] = TCP_FLAG_ACK_V | TCP_FLAG_PUSH_V;
 
     // total length field in the IP header must be set:
     // 20 bytes IP + 20 bytes tcp (when no options) + len of data

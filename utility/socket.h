@@ -30,11 +30,12 @@ typedef uint8_t SOCKET;
 #define DEBUG_RECEIVED_TCP_SYN_SENDING_SYNACK   6
 #define DEBUG_RECEIVED_ACKFIN_CLOSING_SOCKET    7
 #define DEBUG_RECEIVED_ACK_PACKET_HAVE_NO_DATA  8
-#define DEBUG_DONT_KNOW_WHAT_TO_DO              9
-#define DEBUG_SENT_ARP_REQUEST                  10
-#define DEBUG_MAC_RECEIVED_SENDING_TCP_SYN      11
-#define DEBUG_TCP_SYN_SENT                      12
-#define DEBUG_INIT                              13
+#define DEBUG_RECEIVED_ACK_PACKET_WITH_DATA     9
+#define DEBUG_DONT_KNOW_WHAT_TO_DO              10
+#define DEBUG_SENT_ARP_REQUEST                  11
+#define DEBUG_MAC_RECEIVED_SENDING_TCP_SYN      12
+#define DEBUG_TCP_SYN_SENT                      13
+#define DEBUG_INIT                              14
 char *debugCode2String(uint8_t debugCode);
 uint8_t *socketDebug();
 void socketClearDebug();

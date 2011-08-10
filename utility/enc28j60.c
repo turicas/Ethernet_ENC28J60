@@ -171,14 +171,10 @@ void enc28j60Init(uint8_t* macaddr)
 	CSPASSIVE; // ss=0
         //	
 	pinMode(SPI_MOSI, OUTPUT);
-	
 	pinMode(SPI_SCK, OUTPUT);
-	
 	pinMode(SPI_MISO, INPUT);
 	
-	
 	digitalWrite(SPI_MOSI, LOW);
-	
 	digitalWrite(SPI_SCK, LOW);
 	
 	/*DDRB  |= 1<<PB3 | 1<<PB5; // mosi, sck output

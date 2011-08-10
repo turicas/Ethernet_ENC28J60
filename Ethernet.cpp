@@ -34,17 +34,4 @@ void EthernetClass::begin(uint8_t *mac, uint8_t *ip, uint8_t *gateway, uint8_t *
     setSUBR(subnet);
 }
 
-#ifdef ETHERSHIELD_DEBUG
-uint8_t *EthernetClass::returnDebug() {
-    return socketDebug();
-}
-void EthernetClass::clearDebug() {
-    socketClearDebug();
-}
-
-char *debug2str(uint8_t debugCode) {
-    return debugCode2String(debugCode);
-}
-#endif
-
 EthernetClass Ethernet;

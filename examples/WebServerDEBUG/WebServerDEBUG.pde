@@ -5,38 +5,17 @@ byte ip[] = { 192, 168, 1, 123 };
 
 Server server(80);
 
-#ifdef ETHERSHIELD_DEBUG
-#include <inttypes.h>
-uint8_t *debugCodes;
-
-void printSocketDebug() {
-  debugCodes = Ethernet.returnDebug();
-  if (debugCodes[0] != 255) {
-    Serial.println("DEBUG:");
-    for (int i = 0; debugCodes[i] != 255; i++) {
-      Serial.print("  ");
-      Serial.println(debug2str(debugCodes[i]));
-    }
-    Ethernet.clearDebug();
-  }
-}
-#endif
-
 void setup() {
-  Ethernet.begin(mac, ip);
-  server.begin();
-
 #ifdef ETHERSHIELD_DEBUG
   Serial.begin(9600);
 #endif
+
+  Ethernet.begin(mac, ip);
+  server.begin();
 }
 
 void loop() {
   Client client = server.available();
-
-#ifdef ETHERSHIELD_DEBUG
-  printSocketDebug();
-#endif
 
   if (client) {
 
@@ -45,49 +24,34 @@ void loop() {
 #endif
 
     // an http request ends with a blank line
-    boolean current_line_is_blank = true;
+    int current_line_is_blank = 0;
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-
-#ifdef ETHERSHIELD_DEBUG
         Serial.print(c);
-#endif
-
-        // if we've gotten to the end of the line (received a newline
-        // character) and the line is blank, the http request has ended,
-        // so we can send a reply
         if (c == '\n' && current_line_is_blank) {
-          // send a standard http response header
-
 #ifdef ETHERSHIELD_DEBUG
           Serial.println("Received headers!");
 #endif
+          char response[30];
+          int size;
+          sprintf(response, "millis() = <b>%lu</b>", millis());
+          for (size = 0; response[size] != '\0'; size++) {}
 
-          client.println("HTTP/1.1 200 OK");
+          client.println("HTTP/1.0 200 OK");
           client.println("Content-Type: text/html");
+          client.print("Content-Length: ");
+          client.println(size);
           client.println();
-          client.println("<html><meta http-equiv=\"refresh\" content=\"3\"><body>");
           
-          // output the value of each analog input pin
-          for (int i = 0; i < 6; i++) {
-            client.print("A");
-            client.print(i);
-            client.print(" = ");
-            client.print(analogRead(i));
-            client.print("<br>");
-          }
-          client.print("\nmillis() = <b>");
-          client.print(millis());
-          client.print("</b></html></body>");
+          client.print(response);
           break;
         }
-        if (c == '\n') {
-          // we're starting a new line
-          current_line_is_blank = true;
-        } else if (c != '\r') {
-          // we've gotten a character on the current line
-          current_line_is_blank = false;
+        else if (c == '\n') {
+          current_line_is_blank = 1;
+        }
+        else if (c != '\r') {
+          current_line_is_blank = 0;
         }
       }
     }
