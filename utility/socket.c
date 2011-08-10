@@ -2,7 +2,7 @@
 #include "net.h"
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
-#define BUFFER_SIZE         180
+#define BUFFER_SIZE         800
 #define MAX_ITERATIONS      1000
 
 #define NO_STATE            0
