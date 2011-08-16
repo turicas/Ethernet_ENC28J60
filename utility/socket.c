@@ -1,8 +1,31 @@
+/*
+Ethernet_ENC28J60 is an Arduino-compatible Ethernet library
+that works with Microchip's ENC28J60 Ethernet controller.
+
+Copyright (C) 2011 Álvaro Justen <alvaro@justen.eng.br>
+                                 http://twitter.com/turicas
+This project is hosted at GitHub http://github.com/turicas/Ethernet_ENC28J60
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, please read the license at:
+http://www.gnu.org/licenses/gpl-2.0.html
+*/
+
 #include "socket.h"
 #include "net.h"
 #include "enc28j60.h"
 #include "ip_arp_udp_tcp.h"
-#define BUFFER_SIZE         800
+#define BUFFER_SIZE         200
 #define MAX_ITERATIONS      1000
 
 #define NO_STATE            0
@@ -16,6 +39,8 @@ static uint8_t buffer[BUFFER_SIZE + 1];
 uint16_t packetLength;
 
 #ifdef ETHERSHIELD_DEBUG
+char debugStr[80];
+
 static void serial_write(unsigned char c) {
     while (!(UCSR0A & (1 << UDRE0))) {}
     UDR0 = c;
@@ -64,9 +89,11 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t sourcePort, uint8_t flag) {
 }
 
 void flushSockets() {
-    packetLength = enc28j60PacketReceive(BUFFER_SIZE, buffer);
-    if (!packetLength) {
-        //DEBUG: no data available for reading!
+    if (_SOCKETS[0].bytesToRead) { //TODO: verify if is there any free socket (if not, return)
+        return; //TODO: create some method to delete the socket buffer so you can read other packets without needing to read the entire socket buffer
+    } //TODO: define timeout for sockets
+
+    if (!(packetLength = enc28j60PacketReceive(BUFFER_SIZE, buffer))) { //No packet available for reading!
         return;
     }
     else if (eth_type_is_arp_and_my_ip(buffer, packetLength)) {
@@ -82,10 +109,10 @@ void flushSockets() {
             //TODO: write code to get socket id instead of 0
         }
         else {
+            make_arp_answer_from_request(buffer);
 #ifdef ETHERSHIELD_DEBUG
             ethershieldDebug("Answering ARP request.\r\n");
 #endif
-            make_arp_answer_from_request(buffer);
         }
     }
     else if (!eth_type_is_ip_and_my_ip(buffer, packetLength)) {
@@ -96,18 +123,27 @@ void flushSockets() {
     }
     else if (buffer[IP_PROTO_P] == IP_PROTO_ICMP_V &&
             buffer[ICMP_TYPE_P] == ICMP_TYPE_ECHOREQUEST_V) {
-#ifdef ETHERSHIELD_DEBUG
-        //char myStr[80];
-        //sprintf(myStr, "Replying ECHO REQUEST from %d.%d.%d.%d",
-        //        buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
-        //        buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3]);
-        ethershieldDebug("Replying ARP ECHO request.\r\n");
-#endif
         make_echo_reply_from_request(buffer, packetLength);
+#ifdef ETHERSHIELD_DEBUG
+        sprintf(debugStr, "Replying ICMP ECHO REQUEST from %d.%d.%d.%d.\r\n",
+                buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
+                buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3]);
+        ethershieldDebug(debugStr);
+#endif
     }
     else if (buffer[IP_PROTO_P] == IP_PROTO_TCP_V) {
         //DEBUG: it's TCP and for me! Do I want it?
         uint16_t destinationPort = (buffer[TCP_DST_PORT_H_P] << 8) | buffer[TCP_DST_PORT_L_P];
+
+#ifdef ETHERSHIELD_DEBUG
+        sprintf(debugStr, "Received TCP packet from %d.%d.%d.%d:%u on port %d\r\n",
+                buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
+                buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3],
+                (buffer[TCP_SRC_PORT_H_P] << 8) | buffer[TCP_SRC_PORT_L_P],
+                destinationPort);
+        ethershieldDebug(debugStr);
+#endif
+
         uint8_t i, socketSelected = 255;
         for (i = 0; i < MAX_SOCK_NUM; i++) {
             if (_SOCKETS[i].sourcePort == destinationPort &&
@@ -116,23 +152,22 @@ void flushSockets() {
                 break;
             }
         }
-        if (socketSelected == 255) {
 #ifdef ETHERSHIELD_DEBUG
-            //char myStr[80];
-            //sprintf(myStr, "Packet from: %d.%d.%d.%d:%d ignored.",
-            //        buffer[IP_SRC_IP_P], buffer[IP_SRC_IP_P + 1],
-            //        buffer[IP_SRC_IP_P + 2], buffer[IP_SRC_IP_P + 3],
-            //        destinationPort);
-            ethershieldDebug("Packet ignored.\r\n");
+        ethershieldDebug("  Socket selected: ");
+        itoa(socketSelected, debugStr, 10);
+        ethershieldDebug(debugStr);
+        ethershieldDebug("\r\n");
 #endif
-            //return; //TODO: return!
-            socketSelected = 0; //TODO: remove this hack
+
+        if (socketSelected == 255) {
+            //TODO: return and remove the hack below!
+            socketSelected = 0;
         }
         //TODO: change next 'if' to 'else if'
         //DEBUG: ok, the TCP packet is for me and I want it.
         if (buffer[TCP_FLAGS_P] == (TCP_FLAG_SYN_V | TCP_FLAG_ACK_V)) {
 #ifdef ETHERSHIELD_DEBUG
-            ethershieldDebug("Received TCP SYNACK, sending ACK.\r\n");
+            ethershieldDebug("  It is TCP SYNACK, sending ACK\r\n");
 #endif
             make_tcp_ack_from_any(buffer);
             //TODO: verify if I'm waiting for this SYN+ACK
@@ -142,7 +177,7 @@ void flushSockets() {
         }
         else if (buffer[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) {
 #ifdef ETHERSHIELD_DEBUG
-            ethershieldDebug("Received TCP SYN, sending SYNACK.\r\n");
+            ethershieldDebug("  It is TCP SYN, sending SYNACK\r\n");
 #endif
             _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
             make_tcp_synack_from_syn(buffer);
@@ -153,11 +188,11 @@ void flushSockets() {
             data = get_tcp_data_pointer();
             if (!data) {
 #ifdef ETHERSHIELD_DEBUG
-                ethershieldDebug("Received ACK pkt with no data.\r\n");
+                ethershieldDebug("  It is ACK with no data\r\n");
 #endif
                 if (buffer[TCP_FLAGS_P] & TCP_FLAGS_FIN_V) {
 #ifdef ETHERSHIELD_DEBUG
-                    ethershieldDebug("Received ACKFIN, closing socket.\r\n");
+                    ethershieldDebug("    It is ACKFIN, closing socket\r\n");
 #endif
                     make_tcp_ack_from_any(buffer);
                     _SOCKETS[socketSelected].state = SOCK_CLOSED;
@@ -171,11 +206,10 @@ void flushSockets() {
 		make_tcp_ack_from_any(buffer); //TODO-ACK
                 dataSize = packetLength - (&buffer[data] - buffer);
 #ifdef ETHERSHIELD_DEBUG
-                char value[6];
-                itoa(dataSize, value, 10);
-                ethershieldDebug("Received ACK pkt with data, ACK sent.\r\n");
-                ethershieldDebug("  # bytes: ");
-                ethershieldDebug(value);
+                itoa(dataSize, debugStr, 10);
+                ethershieldDebug("  It is ACK with data, ACK sent\r\n");
+                ethershieldDebug("    # bytes: ");
+                ethershieldDebug(debugStr);
                 ethershieldDebug("\r\n");
 #endif
                 _SOCKETS[socketSelected].state = SOCK_ESTABLISHED;
@@ -185,7 +219,7 @@ void flushSockets() {
                 }
                 _SOCKETS[socketSelected].bytesToRead = i;
 #ifdef ETHERSHIELD_DEBUG
-                ethershieldDebug("  Data:\r\n");
+                ethershieldDebug("    Data:\r\n");
                 for (i = 0; i < dataSize; i++) {
                     serial_write(_SOCKETS[socketSelected].dataBuffer[i]);
                 }
@@ -211,9 +245,6 @@ uint8_t listen(SOCKET s) {
 uint8_t connect(SOCKET s, uint8_t *destinationIp, uint16_t destinationPort) {
     uint16_t packetChecksum, i, sourcePort;
     char buffer[59];
-#ifdef ETHERSHIELD_DEBUG
-    char myStr[80];
-#endif
 
     //TODO: create an ARP table?
     make_arp_request(buffer, destinationIp);
@@ -286,7 +317,8 @@ uint8_t close(SOCKET s) {
     //do not call the function that does verifications
     _SOCKETS[s].state = SOCK_CLOSED;
     _SOCKETS[s].sendPacketLength = 0;
-    //free(_SOCKETS[s].dataBuffer); //TODO: really need this?
+    _SOCKETS[s].bytesToRead = 0;
+    free(_SOCKETS[s].dataBuffer); //TODO: really need this?
 }
 
 uint8_t getSn_SR(SOCKET s) {
