@@ -3,7 +3,7 @@ extern "C" {
   #include "string.h"
 }
 
-#include "WProgram.h"
+#include "Arduino.h"
 
 #include "Ethernet.h"
 #include "Client.h"
@@ -17,7 +17,7 @@ Client::Client(uint8_t sock) {
 
 Client::Client(uint8_t *ip, uint16_t port) {
   _ip = ip;
-  _port = port;  
+  _port = port;
   _sock = 255;
 }
 
@@ -36,18 +36,18 @@ uint8_t Client::connect() {
       break;
     }
   }
-  
+
 #ifdef ETHERSHIELD_DEBUG
     sprintf(_DEBUG, "Client::connect() DEBUG B. _sock = %d",
             _sock);
 #endif
   if (_sock == 255)
     return 0;
-    
+
   _srcport++;
   if (_srcport + 1024 == 0) _srcport = 0;
   socket(_sock, Sn_MR_TCP, _srcport + 1024, 0);
-  
+
 #ifdef ETHERSHIELD_DEBUG
     sprintf(_DEBUG, "Client::connect() DEBUG C. _sock = %d",
             _sock);
@@ -56,7 +56,7 @@ uint8_t Client::connect() {
     _sock = 255;
     return 0;
   }
-    
+
 #ifdef ETHERSHIELD_DEBUG
     sprintf(_DEBUG, "Client::connect() DEBUG D. _sock = %d", _sock);
 #endif
@@ -67,7 +67,7 @@ uint8_t Client::connect() {
       return 0;
     }
   }
-  
+
 #ifdef ETHERSHIELD_DEBUG
     sprintf(_DEBUG, "Client::connect() DEBUG E. _sock = %d", _sock);
 #endif
@@ -80,19 +80,25 @@ char *Client::debug() {
 }
 #endif
 
-void Client::write(uint8_t b) {
-  if (_sock != 255)
-    send(_sock, &b, 1);
+size_t Client::write(uint8_t b) {
+    if (_sock != 255) {
+        send(_sock, &b, 1);
+    }
+    return 1; //TODO: change to real size
 }
 
-void Client::write(const char *str) {
-  if (_sock != 255)
-    send(_sock, (const uint8_t *)str, strlen(str));
+size_t Client::write(const char *str) {
+    if (_sock != 255) {
+        send(_sock, (const uint8_t *)str, strlen(str));
+    }
+    return 1; //TODO: change to real size
 }
 
-void Client::write(const uint8_t *buf, size_t size) {
-  if (_sock != 255)
-    send(_sock, buf, size);
+size_t Client::write(const uint8_t *buf, size_t size) {
+    if (_sock != 255) {
+        send(_sock, buf, size);
+    }
+    return 1; //TODO: change to real size
 }
 
 int Client::available() {
@@ -117,19 +123,19 @@ void Client::flush() {
 void Client::stop() {
   if (_sock == 255)
     return;
-  
+
   // attempt to close the connection gracefully (send a FIN to other side)
   disconnect(_sock);
   unsigned long start = millis();
-  
+
   // wait a second for the connection to close
   while (status() != SOCK_CLOSED && millis() - start < 1000)
     delay(1);
-    
+
   // if it hasn't closed, close it forcefully
   if (status() != SOCK_CLOSED)
     close(_sock);
-  
+
   EthernetClass::_server_port[_sock] = 0;
   _sock = 255;
 }

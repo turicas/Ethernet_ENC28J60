@@ -7,7 +7,7 @@
  * Follow the entire project at:
  *   http://github.com/turicas/Ethernet_ENC28J60
  *
- * Original author: Guido Socher 
+ * Original author: Guido Socher
  * Copyright: GPL V2
  * http://www.gnu.org/licenses/gpl.html
  *
@@ -22,7 +22,7 @@
 #include <avr/io.h>
 //#include "avr_compat.h"
 #include "enc28j60.h"
-#include "WConstants.h"  //all things wiring / arduino
+#include "Arduino.h"  //all things wiring / arduino
 //#include "timeout.h"
 //
 //#define F_CPU 10000000UL  // 12.5 MHz
@@ -51,7 +51,7 @@ static uint16_t NextPacketPtr;
 // set CS to 0 = active
 #define CSACTIVE digitalWrite(ENC28J60_CONTROL_CS, LOW)
 // set CS to 1 = passive
-#define CSPASSIVE digitalWrite(ENC28J60_CONTROL_CS, HIGH) 
+#define CSPASSIVE digitalWrite(ENC28J60_CONTROL_CS, HIGH)
 //
 #define waitspi() while(!(SPSR&(1<<SPIF)))
 
@@ -176,14 +176,14 @@ void enc28j60Init(uint8_t* macaddr)
         // ss as output:
 	pinMode(ENC28J60_CONTROL_CS, OUTPUT);
 	CSPASSIVE; // ss=0
-        //	
+        //
 	pinMode(SPI_MOSI, OUTPUT);
 	pinMode(SPI_SCK, OUTPUT);
 	pinMode(SPI_MISO, INPUT);
-	
+
 	digitalWrite(SPI_MOSI, LOW);
 	digitalWrite(SPI_SCK, LOW);
-	
+
 	/*DDRB  |= 1<<PB3 | 1<<PB5; // mosi, sck output
 	cbi(DDRB,PINB4); // MISO is input
         //
@@ -252,7 +252,7 @@ void enc28j60Init(uint8_t* macaddr)
 	enc28j60Write(MABBIPG, 0x12);
 	// Set the maximum packet size which the controller will accept
         // Do not send packets longer than MAX_FRAMELEN:
-	enc28j60Write(MAMXFLL, MAX_FRAMELEN&0xFF);	
+	enc28j60Write(MAMXFLL, MAX_FRAMELEN&0xFF);
 	enc28j60Write(MAMXFLH, MAX_FRAMELEN>>8);
 	// do bank 3 stuff
         // write MAC address

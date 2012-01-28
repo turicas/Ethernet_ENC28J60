@@ -22,26 +22,26 @@ void Server::begin()
       EthernetClass::_server_port[sock] = _port;
       break;
     }
-  }  
+  }
 }
 
 void Server::accept()
 {
   int listening = 0;
-  
+
   for (int sock = 0; sock < MAX_SOCK_NUM; sock++) {
     Client client(sock);
-    
+
     if (EthernetClass::_server_port[sock] == _port) {
       if (client.status() == SOCK_LISTEN) {
         listening = 1;
       } else if (client.status() == SOCK_CLOSE_WAIT && !client.available()) {
         client.stop();
       }
-    } 
+    }
   }
-  
-  if (!listening) {      
+
+  if (!listening) {
     begin();
   }
 }
@@ -49,7 +49,7 @@ void Server::accept()
 Client Server::available()
 {
   accept();
-  
+
   for (int sock = 0; sock < MAX_SOCK_NUM; sock++) {
     Client client(sock);
     if (EthernetClass::_server_port[sock] == _port &&
@@ -60,30 +60,33 @@ Client Server::available()
       }
     }
   }
-  
+
   return Client(255);
 }
 
-void Server::write(uint8_t b) 
+size_t Server::write(uint8_t b)
 {
   write(&b, 1);
+  return 1; //TODO: change to real size
 }
 
-void Server::write(const char *str) 
+size_t Server::write(const char *str)
 {
   write((const uint8_t *)str, strlen(str));
+  return 1; //TODO: change to real size
 }
 
-void Server::write(const uint8_t *buffer, size_t size) 
+size_t Server::write(const uint8_t *buffer, size_t size)
 {
   accept();
-  
+
   for (int sock = 0; sock < MAX_SOCK_NUM; sock++) {
     Client client(sock);
-    
+
     if (EthernetClass::_server_port[sock] == _port &&
         client.status() == SOCK_ESTABLISHED) {
       client.write(buffer, size);
     }
   }
+  return 1; //TODO: change to real size
 }
