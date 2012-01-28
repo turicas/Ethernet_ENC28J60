@@ -1,0 +1,15 @@
+#!/bin/bash
+
+IP=192.168.1.123
+TIMES=5
+
+ping -c $TIMES -W 1 $IP > result.tmp
+times=$(sed -n '/time=/p' result.tmp | sed 's/.*time=\(.*\) ms/\1/')
+rm result.tmp
+if [ -z "$times" ]; then
+    exit 1
+else
+    avg=$(echo "("$times")" | sed 's/ / + /g; s/$/ \/ '$TIMES'/' | bc -l)
+    echo "Average: $(printf '%.2f' $avg) ms"
+    exit 0
+fi

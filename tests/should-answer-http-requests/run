@@ -1,0 +1,17 @@
+#!/bin/bash
+
+IP=192.168.1.123
+
+sleep 1
+wget --server-response -q -t 1 --timeout=1 http://$IP/ -O result.tmp \
+     2>headers.tmp
+result=$?
+headers="$(cat headers.tmp)"
+content="$(cat result.tmp)"
+rm result.tmp headers.tmp
+echo $headers
+if [ "$content" != "Arduino Web Server" ]; then
+    exit 1
+else
+    exit $result
+fi

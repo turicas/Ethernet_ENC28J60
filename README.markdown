@@ -16,6 +16,10 @@ The goal of the project will be achieved as an Arduino user can use the same cod
     Arduino with etherShield (based on Microchip ENC28J60 Ethernet controller)
 </div>
 
+This library is developed to work with **Arduino 1.0**. It can run in older
+versions (like Duemilanove) with little modifications in the code, but it is
+not oficially supported.
+
 
 Where to buy
 ------------
@@ -31,6 +35,7 @@ If you just want to test without debugging, use the examples `WebServerSimple` a
 
 **WARNING:** This is a work-in-progress project and need more tests to be used in production environments!
 
+
 Using with Arduino Mega
 -----------------------
 
@@ -45,6 +50,7 @@ For now that are some limitations that will be removed in a near future:
 - Just one socket per time;
 - Only support for TCP server -- `connect()`, `sendto()` and `recvfrom()` don't work yet;
 - Can only "answer" to the last packet received.
+
 
 Architecture
 ============
@@ -73,22 +79,43 @@ In a near future I want to replace all ip_arp_udp_tcp layer in the socket layer,
 
 When this goal is reached we can create a single socket.c that communicate with one or another controller (W5100 or ENC28J60).
 
+
+Contributing
+============
+
+If you want to contribute, please run the tests with your board. The tests are
+made using shell script, so you need a UNIX environment.
+To run the tests:
+
+- Plug your Arduino with ENC28J60 module/shield in USB port
+- Plug the network cable in the Ethernet module/shield
+- Change Arduino path in `make.sh` (it is tested under Ubuntu GNU/Linux,
+  you'll need to change the port if you use other UNIX-like SO)
+- Go to `tests` folder and run the file `run`
+
+If you get some error, investigate if you can compile, reset and upload the
+`Blink` example using `make.sh` script (run the command:
+`SKETCH_NAME=path-to-blink.pde ./make.sh`).
+
+
 Next Goals
 ==========
 
 - Finish implementation of `connect()`
 - Modify `send()` to acomplish TCP client sockets
-- Implement `sendto()` and `recvfrom()`
+- Implement `sendto()` and `recvfrom()` (UDP)
 - Support for multiple sockets
-- Put all the features of `ip_arp_udp_tcp.c` in `socket.c` (and then removes `ip_arp_udp_tcp.*`)
+- Put all the features of `ip_arp_udp_tcp.c` in `socket.c`
 
 
 How To Debug
 ============
 
-If do you want to test and modify this library, probably you will want also to enable debugging.
-You can see what is happening using the Serial Monitor on Arduino IDE if you uncomment the line below in the file `utility/socket.h`:
+If do you want to test and modify this library, probably you will want also to
+enable debugging. You can see what is happening using the Serial Monitor on
+Arduino IDE if you uncomment the line below in the file `utility/socket.h`:
 
     //#define ETHERSHIELD_DEBUG
 
-Please use the examples `WebServerDEBUG` and `WebClientDEBUG` for debugging (and to learn how to do it).
+Please use the examples `WebServerDEBUG` and `WebClientDEBUG` for debugging
+(and to learn how to do it).

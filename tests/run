@@ -1,0 +1,34 @@
+#!/bin/bash
+
+log() {
+    echo -n [$(date +"%Y-%m-%d %H:%M:%S")] $@
+}
+
+run_test() {
+    log "$1: [compiling/uploading]"
+    cd "$1"
+    SKETCH_NAME=arduino.pde ../../make.sh 2> /dev/null
+    echo -n '[running test] '
+    ./run > test-result.tmp
+    result=$?
+    if [ "$result" -eq 0 ]; then
+        echo -n 'OK'
+    else
+        echo -n "FAIL! Return code: $result"
+    fi
+    echo " ($(cat test-result.tmp))"
+    rm -rf test-result.tmp
+    cd ..
+}
+
+if [ -z "$1" ]; then
+    files=$(ls)
+else
+    files="$@"
+fi
+
+for file in $files; do
+    if [ -d "$file" ]; then
+        run_test "$file"
+    fi
+done
