@@ -1,7 +1,13 @@
-/*********************************************
+/*
  * vim:sw=8:ts=8:si:et
- * To use the above modeline in vim you must have "set modeline" in your .vimrc
- * Author: Guido Socher 
+ *
+ * Modifications to make it work with Arduino's Ethernet library made by:
+ *   Álvaro Justen <alvaro@justen.eng.br>
+ *   http://twitter.com/turicas
+ * Follow the entire project at:
+ *   http://github.com/turicas/Ethernet_ENC28J60
+ *
+ * Original author: Guido Socher 
  * Copyright: GPL V2
  * http://www.gnu.org/licenses/gpl.html
  *
@@ -11,7 +17,8 @@
  *
  * Title: Microchip ENC28J60 Ethernet Interface Driver
  * Chip type           : ATMEGA88 with ENC28J60
- *********************************************/
+*/
+
 #include <avr/io.h>
 //#include "avr_compat.h"
 #include "enc28j60.h"
