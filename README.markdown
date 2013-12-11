@@ -1,6 +1,10 @@
 Ethernet ENC28J60
 ==================
 
+> Note: unfortunately I don't have time to maintain (and finish) this
+> implementation. Please see
+> [arduino_uip](https://github.com/ntruchsess/arduino_uip).
+
 [Microchip ENC28J60](http://www.microchip.com/wwwproducts/Devices.aspx?dDocName=en022889) is an Ethernet controller with SPI interface that is used in some Arduino Ethernet Shields (these are called "etherShield"s). Unfortunatelly, the standard Arduino Ethernet Shield (called "Ethernet Shield") have the [WIZnet W5100](http://www.wiznet.co.kr/Sub_Modules/en/product/Product_Detail.asp?cate1=5&cate2=7&cate3=26&pid=1011) controller - and only the version with W5100 is oficially supported by the Arduino standard library.
 
 There is a library called [etherShield](http://www.nuelectronics.com/download/projects/etherShield.zip) but it is very hard to use (you need to manage ARP and TCP packets in the "application layer"). So, I decided to write a new socket.c (based on etherShield's code) that exposes the same API the standard Ethernet Shield library exposes.
@@ -119,3 +123,11 @@ Arduino IDE if you uncomment the line below in the file `utility/socket.h`:
 
 Please use the examples `WebServerDEBUG` and `WebClientDEBUG` for debugging
 (and to learn how to do it).
+
+
+Related Software
+================
+
+- Nuttx
+- uIP
+- Cotiki
