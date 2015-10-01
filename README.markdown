@@ -106,7 +106,7 @@ Next Goals
 ==========
 
 - Finish implementation of `connect()`
-- Modify `send()` to acomplish TCP client sockets
+- Modify `send()` to accomplish TCP client sockets
 - Implement `sendto()` and `recvfrom()` (UDP)
 - Support for multiple sockets
 - Put all the features of `ip_arp_udp_tcp.c` in `socket.c`
